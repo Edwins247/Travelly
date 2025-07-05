@@ -6,7 +6,7 @@ import {
   NavigationMenuList,
 } from '@/components/ui/navigation-menu';
 
-import { NavLink } from '@/components/common/NavLink';    // ← 방금 만든 NavLink
+import { NavLink } from '@/components/common/NavLink';   
 import { LoginButton } from '@/components/common/LoginButton';
 import { MobileSheet } from '@/components/common/MobileSheet';
 
