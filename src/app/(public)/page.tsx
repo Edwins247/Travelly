@@ -1,4 +1,3 @@
-// src/app/(public)/page.tsx
 export const metadata = { title: 'Travelly' };
 
 export default function Home() {

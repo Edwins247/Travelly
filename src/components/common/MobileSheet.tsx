@@ -4,7 +4,7 @@ import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 import { NavLink, NavLinkProps } from '@/components/common/NavLink';   // ← 우리가 만든 NavLink
-// import { LoginButton } from '@/components/common/LoginButton';   // 만들고 나서 주석 해제
+import { LoginButton } from '@/components/common/LoginButton';   // 만들고 나서 주석 해제
 import { cn } from '@/lib/utils';
 
 interface MobileSheetProps {

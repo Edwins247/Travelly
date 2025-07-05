@@ -1,4 +1,3 @@
-// 템플릿 ─ 어떤 페이지든 복사해서 붙여넣기
 export const metadata = { title: '준비중' };
 
 export default function Placeholder() {

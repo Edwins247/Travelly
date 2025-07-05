@@ -10,7 +10,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';            // shadcn 템플릿
+import { Input } from '@/components/ui/input';            
 import { useForm } from 'react-hook-form';
 import { useLoginModal } from '@/store/loginModalStore';
 import { useAuthStore } from '@/store/authStore';
