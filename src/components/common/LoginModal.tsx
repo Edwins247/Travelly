@@ -2,7 +2,6 @@
 
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -40,7 +39,6 @@ export function LoginModal() {
 
   return (
     <Dialog open={open} onOpenChange={v => !v && closeModal()}>
-      {/* 외부에서 DialogTrigger를 쓸 수도 있으므로 내부엔 Trigger 없음 */}
 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

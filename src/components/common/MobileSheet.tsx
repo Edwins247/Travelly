@@ -3,8 +3,8 @@
 import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
-import { NavLink, NavLinkProps } from '@/components/common/NavLink';   // ← 우리가 만든 NavLink
-import { LoginButton } from '@/components/common/LoginButton';   // 만들고 나서 주석 해제
+import { NavLink, NavLinkProps } from '@/components/common/NavLink';   
+import { LoginButton } from '@/components/common/LoginButton';   
 import { cn } from '@/lib/utils';
 
 interface MobileSheetProps {
@@ -44,9 +44,9 @@ export function MobileSheet({ className, nav }: MobileSheetProps) {
           ))}
 
           {/* 로그인 / 로그아웃 버튼 자리 */}
-          {/* <div className="mt-4 border-t pt-4">
+          <div className="mt-4 border-t pt-4">
             <LoginButton className="w-full" />
-          </div> */}
+          </div>
         </nav>
       </SheetContent>
     </Sheet>

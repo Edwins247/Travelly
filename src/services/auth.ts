@@ -11,18 +11,28 @@ import {
 import { firebaseApp } from '@/services/firebase';
 import { useAuthStore } from '@/store/authStore';
 
-const auth    = getAuth(firebaseApp);
-const google  = new GoogleAuthProvider();
+const auth = getAuth(firebaseApp);
+const google = new GoogleAuthProvider();
 
 /* ------------------------------------------------------------- */
 /*  공통 헬퍼 – 상태 업데이트                                     */
 /* ------------------------------------------------------------- */
 const set = useAuthStore.getState();
 
-function start() { set.setLoad(true);  set.setError(null); }
-function success(user: User) { set.setUser(user); }
-function fail(e: any) { set.setError(e.message); throw e; }
-function end() { set.setLoad(false); }
+function start() {
+  set.setLoad(true);
+  set.setError(null);
+}
+function success(user: User) {
+  set.setUser(user);
+}
+function fail(e: unknown) {
+  if (e instanceof Error) set.setError(e.message);
+  throw e;
+}
+function end() {
+  set.setLoad(false);
+}
 
 /* ------------------------------------------------------------- */
 /*  Google 로그인                                                 */
