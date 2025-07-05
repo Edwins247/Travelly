@@ -1,3 +1,4 @@
+'use client';         
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
@@ -18,6 +19,5 @@ export const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseC
 export const auth = getAuth(firebaseApp);
 export const db   = getFirestore(firebaseApp);
 
-/** Analytics는 브라우저에서만 동작 — 서버·Storybook 환경 보호 */
 export const analytics =
   typeof window !== 'undefined' ? await (isSupported().then(ok => ok ? getAnalytics(firebaseApp) : null)) : null;
