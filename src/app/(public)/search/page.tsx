@@ -5,13 +5,10 @@ import { demoPlaces } from '@/mocks/places';
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
-type SearchPageProps = {
-  /**
-   * Next 가 주입하는 URL 쿼리.
-   * - 서버 프리렌더 단계에서 `Promise` 로 올 수도 있으므로 union 처리
-   */
-  searchParams?: SearchParams | Promise<SearchParams>;
-};
+interface SearchPageProps {
+  searchParams?: Promise<SearchParams>;
+}
+
 
 export const dynamic = 'force-dynamic'; // SSG 캐시 무효 (필요 시)
 
