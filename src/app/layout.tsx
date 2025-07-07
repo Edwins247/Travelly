@@ -1,3 +1,4 @@
+import Footer from '@/components/common/Footer';
 import Header from '@/components/common/Header';
 import { LoginModal } from '@/components/common/LoginModal';
 import '@/styles/globals.css';
@@ -10,6 +11,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen">
         <Header />
         {children}
+        <Footer />
         <LoginModal />
       </body>
     </html>
