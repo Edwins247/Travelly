@@ -1,5 +1,6 @@
 import { SearchBar }   from '@/components/home/SearchBar';
 import { KeywordChips } from '@/components/home/KeywordChips';
+import { CategoryGrid } from '@/components/home/CategoryGrid';
 
 export const metadata = { title: 'Travelly' };
 
@@ -21,6 +22,8 @@ export default function Home() {
 
         {/* 추천 키워드 */}
         <KeywordChips keywords={hotKeywords} />
+
+        <CategoryGrid />
       </div>
     </main>
   );
