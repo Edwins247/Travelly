@@ -23,7 +23,7 @@ export function PlaceCard({
   onToggleLike,
   className,
 }: PlaceCardProps) {
-  const router = useRouter();
+  // const router = useRouter();
   const { user } = useAuthStore();
 
   const handleLike = (e: React.MouseEvent) => {
