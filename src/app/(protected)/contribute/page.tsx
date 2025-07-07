@@ -1,9 +1,11 @@
-export const metadata = { title: '준비중' };
+import { ContributeForm } from '@/components/contribute/ContributeForm';
 
-export default function Placeholder() {
+export const metadata = { title: 'Travelly | 여행지 제안' };
+
+export default function ContributePage() {
   return (
-    <main className="flex h-screen items-center justify-center">
-      <p className="text-xl text-muted-foreground">준비 중입니다 🚧</p>
+    <main className="mx-auto max-w-2xl px-4 py-10">
+      <ContributeForm />
     </main>
   );
 }
