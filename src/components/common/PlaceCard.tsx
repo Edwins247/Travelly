@@ -6,7 +6,7 @@ import { Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlaceCardData } from '@/types/place';
 import { useAuthStore } from '@/store/authStore';
-import { useRouter } from 'next/navigation';
+// import { useRouter } from 'next/navigation';
 
 interface PlaceCardProps extends PlaceCardData {
   onToggleLike?: (id: string, next: boolean) => void; // wishlist 페이지에서 주입
