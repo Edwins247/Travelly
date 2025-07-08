@@ -1,40 +1,83 @@
-import { Suspense }    from 'react';
-import { FilterBar }   from '@/components/search/FilterBar';
-import { PlaceGrid }   from '@/components/home/PlaceGrid';
-import { Pagination }  from '@/components/common/Pagination';
-import { demoPlaces }  from '@/mocks/places';
+// src/app/(public)/search/page.tsx
+'use client';
 
-type SearchParams          = Record<string, string | string[] | undefined>;
-interface SearchPageProps { searchParams?: Promise<SearchParams>; }
+import React, { Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { FilterBar } from '@/components/search/FilterBar';
+import { PlaceGrid } from '@/components/home/PlaceGrid';
+import { Pagination } from '@/components/common/Pagination';
+import { getPlaces } from '@/services/places';
+import type { PlaceCardData } from '@/types/place';
 
-export const dynamic = 'force-dynamic';
+// 1) 실제 조회·렌더링 로직은 이 컴포넌트 안에 담고…
+function SearchContent() {
+  const params = useSearchParams();
+  const router = useRouter();
 
-export default async function SearchPage({ searchParams }: SearchPageProps) {
-  /* 기존 로직 유지 */
-  const params          = (await searchParams) ?? {};
-  const keyword         = params.keyword ?? '';
+  const rawKeyword = params.get('keyword') ?? '';
+  const rawPage    = params.get('page')    ?? '1';
+  const pageNumber = Math.max(Number(rawPage) || 1, 1);
+  const PER_PAGE   = 12;
 
-  /* ── 페이지네이션 계산 ─────────────────── */
-  const PER_PAGE        = 12;
-  const pageNumber      = Number(params.page ?? '1');
-  const currentPage     = pageNumber > 0 ? pageNumber : 1;
+  const [allPlaces, setAllPlaces] = useState<PlaceCardData[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [page, setPage]           = useState(pageNumber);
 
-  const total           = demoPlaces.length;
-  const start           = (currentPage - 1) * PER_PAGE;
-  const pageSlice       = demoPlaces.slice(start, start + PER_PAGE);
+  // URL 페이지 번호 동기화
+  useEffect(() => {
+    if (page !== pageNumber) {
+      const q = new URLSearchParams(params);
+      if (page > 1) q.set('page', String(page));
+      else         q.delete('page');
+      router.push(`?${q.toString()}`, { scroll: false });
+    }
+  }, [page, pageNumber, params, router]);
+
+  // Firestore 데이터 패칭
+  useEffect(() => {
+    setLoading(true);
+    getPlaces({ keyword: rawKeyword })
+      .then(setAllPlaces)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [rawKeyword]);
+
+  const total     = allPlaces.length;
+  const start     = (pageNumber - 1) * PER_PAGE;
+  const pageSlice = allPlaces.slice(start, start + PER_PAGE);
 
   return (
+    <>
+      <h1 className="text-xl font-semibold">
+        “{rawKeyword}” 검색 결과 ({total})
+      </h1>
+
+      <FilterBar />
+
+      {loading ? (
+        <PlaceGrid title="검색 결과" isLoading />
+      ) : (
+        <PlaceGrid title="" places={pageSlice} />
+      )}
+
+      <Pagination
+        perPage={PER_PAGE}
+        total={total}
+        currentPage={pageNumber}
+        onPageChange={setPage}
+      />
+    </>
+  );
+}
+
+// 2) 페이지 컴포넌트에서 Suspense 로 감싸기
+export default function SearchPage() {
+  return (
     <main className="mx-auto max-w-6xl space-y-6 px-4 py-10">
-      <h1 className="text-xl font-semibold">“{keyword}” 검색 결과</h1>
-
-      <Suspense fallback={null}>
-        <FilterBar />
+      <Suspense fallback={<div>검색 결과를 불러오는 중…</div>}>
+        <SearchContent />
       </Suspense>
-
-      <PlaceGrid title="" places={pageSlice} />
-
-      {/* 🔽 새로 추가된 페이지네이션 */}
-      <Pagination perPage={PER_PAGE} total={total} />
     </main>
   );
 }

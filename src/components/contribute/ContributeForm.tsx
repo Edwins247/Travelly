@@ -1,8 +1,9 @@
+// src/components/contribute/ContributeForm.tsx
 'use client';
 
 import { useAuthStore } from '@/store/authStore';
 import { useForm } from 'react-hook-form';
-import { addPlace } from '@/services/places';
+import { addPlace, PlaceInput } from '@/services/places';
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -17,16 +18,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 
-/* ---------- 옵션 목록 ---------- */
 const regions = ['서울', '경기', '제주', '부산', '해외'];
 const seasons = ['봄', '여름', '가을', '겨울'];
 const budgets = ['저예산', '중간', '고급'];
-const keywords = ['가족여행', '힐링', '사진맛집', '반려동물 가능'];
+const keywordsOptions = ['가족여행', '힐링', '사진맛집', '반려동물 가능'];
 
 export interface PlaceFormValues {
   name: string;
-  description: string;
-  imageUrl: string;
+  description?: string;
+  imageUrl?: string;
   region: string;
   regionType: '국내' | '해외';
   seasonTag: string;
@@ -36,12 +36,11 @@ export interface PlaceFormValues {
 
 export function ContributeForm() {
   const { user } = useAuthStore();
-
   const {
     register,
     handleSubmit,
-    setValue,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<PlaceFormValues>({
     defaultValues: {
@@ -50,58 +49,89 @@ export function ContributeForm() {
     },
   });
 
-  /* ------------ 체크박스 상태 ------------ */
   const kwSel = watch('keywords');
-  const onKwTap = (k: string, checked: boolean) =>
-    setValue('keywords', checked ? [...kwSel, k] : kwSel.filter((v) => v !== k));
+  const onKwTap = (kw: string, checked: boolean) =>
+    setValue(
+      'keywords',
+      checked ? [...kwSel, kw] : kwSel.filter((x) => x !== kw),
+    );
 
-  /* ------------ 제출 ------------ */
-  const onSubmit = async (data: PlaceFormValues) => {
-    if (!user) return alert('로그인 후 이용하세요!');
+  const onSubmit = async (values: PlaceFormValues) => {
+    if (!user) {
+      alert('로그인 후 이용해주세요.');
+      return;
+    }
+
+    // PlaceInput 인터페이스에 맞게 변환
+    const payload: PlaceInput = {
+      name: values.name,
+      description: values.description,
+      imageUrl: values.imageUrl,
+      location: { region: values.region },
+      regionType: values.regionType,
+      seasonTags: [values.seasonTag],
+      budgetLevel: values.budgetLevel as '저예산' | '중간' | '고급',
+      keywords: values.keywords,
+      createdBy: user.uid,    
+    };
+
     try {
-      await addPlace({ ...data, createdBy: user.uid });
-      alert('제안이 등록되었습니다 🎉');
+      const newId = await addPlace(payload);
+      alert(`여행지 제안이 등록되었습니다! (ID: ${newId})`);
     } catch (e) {
       console.error(e);
-      alert('저장 중 오류가 발생했습니다');
+      alert('제안 등록 중 오류가 발생했습니다.');
     }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="space-y-4">
-        {/* 여행지 이름 */}
-        <div className="space-y-2">
-          <Label htmlFor="place-name">여행지 이름*</Label>
-          <Input id="place-name" {...register('name', { required: '필수 입력' })} />
-          {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-        </div>
-
-        {/* 설명 */}
-        <div className="space-y-2">
-          <Label htmlFor="place-desc">설명</Label>
-          <Textarea id="place-desc" rows={3} {...register('description')} />
-        </div>
-
-        {/* 대표 이미지 URL */}
-        <div className="space-y-2">
-          <Label htmlFor="place-img">대표 이미지 URL</Label>
-          <Input
-            id="place-img"
-            placeholder="https://"
-            {...register('imageUrl', {
-              pattern: { value: /^https?:\/\//, message: 'URL 형식이 아닙니다' },
-            })}
-          />
-          {errors.imageUrl && <p className="text-sm text-destructive">{errors.imageUrl.message}</p>}
-        </div>
+      {/* 여행지 이름 */}
+      <div>
+        <Label htmlFor="name">여행지 이름*</Label>
+        <Input
+          id="name"
+          {...register('name', { required: '필수 입력입니다.' })}
+        />
+        {errors.name && (
+          <p className="text-sm text-destructive">{errors.name.message}</p>
+        )}
       </div>
-      {/* --- 지역 / 국내·해외 --- */}
+
+      {/* 설명 */}
+      <div>
+        <Label htmlFor="description">설명</Label>
+        <Textarea id="description" {...register('description')} rows={3} />
+      </div>
+
+      {/* 이미지 URL */}
+      <div>
+        <Label htmlFor="imageUrl">대표 이미지 URL</Label>
+        <Input
+          id="imageUrl"
+          placeholder="https://"
+          {...register('imageUrl', {
+            pattern: {
+              value: /^https?:\/\//,
+              message: '유효한 URL을 입력해주세요.',
+            },
+          })}
+        />
+        {errors.imageUrl && (
+          <p className="text-sm text-destructive">
+            {errors.imageUrl.message}
+          </p>
+        )}
+      </div>
+
+      {/* 지역 선택 */}
       <div className="grid grid-cols-2 gap-4">
-        {/* 지역 */}
         <div>
           <Label>Region*</Label>
-          <Select value={watch('region')} onValueChange={(v) => setValue('region', v)}>
+          <Select
+            value={watch('region')}
+            onValueChange={(v) => setValue('region', v)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="선택" />
             </SelectTrigger>
@@ -113,15 +143,17 @@ export function ContributeForm() {
               ))}
             </SelectContent>
           </Select>
-          {errors.region && <p className="text-sm text-destructive">필수</p>}
+          {errors.region && (
+            <p className="text-sm text-destructive">필수 선택입니다.</p>
+          )}
         </div>
-
-        {/* 국내/해외 */}
         <div>
-          <Label>국내 / 해외*</Label>
+          <Label>국내/해외*</Label>
           <Select
             value={watch('regionType')}
-            onValueChange={(v) => setValue('regionType', v as '국내' | '해외')}
+            onValueChange={(v) =>
+              setValue('regionType', v as '국내' | '해외')
+            }
           >
             <SelectTrigger>
               <SelectValue />
@@ -133,11 +165,15 @@ export function ContributeForm() {
           </Select>
         </div>
       </div>
-      {/* --- 계절 / 예산 --- */}
+
+      {/* 계절/예산 */}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>추천 계절*</Label>
-          <Select value={watch('seasonTag')} onValueChange={(v) => setValue('seasonTag', v)}>
+          <Select
+            value={watch('seasonTag')}
+            onValueChange={(v) => setValue('seasonTag', v)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="선택" />
             </SelectTrigger>
@@ -149,12 +185,16 @@ export function ContributeForm() {
               ))}
             </SelectContent>
           </Select>
-          {errors.seasonTag && <p className="text-sm text-destructive">필수</p>}
+          {errors.seasonTag && (
+            <p className="text-sm text-destructive">필수 선택입니다.</p>
+          )}
         </div>
-
         <div>
           <Label>예산대*</Label>
-          <Select value={watch('budgetLevel')} onValueChange={(v) => setValue('budgetLevel', v)}>
+          <Select
+            value={watch('budgetLevel')}
+            onValueChange={(v) => setValue('budgetLevel', v)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="선택" />
             </SelectTrigger>
@@ -166,26 +206,34 @@ export function ContributeForm() {
               ))}
             </SelectContent>
           </Select>
-          {errors.budgetLevel && <p className="text-sm text-destructive">필수</p>}
+          {errors.budgetLevel && (
+            <p className="text-sm text-destructive">필수 선택입니다.</p>
+          )}
         </div>
       </div>
-      {/* --- 키워드 (다중 선택) --- */}
+
+      {/* 키워드 체크박스 */}
       <fieldset>
         <legend className="mb-2 text-sm font-medium">키워드*</legend>
         <div className="flex flex-wrap gap-2">
-          {keywords.map((k) => (
+          {keywordsOptions.map((kw) => (
             <Checkbox
-              key={k}
-              checked={kwSel.includes(k)}
-              onCheckedChange={(c) => onKwTap(k, !!c)}
+              key={kw}
+              checked={kwSel.includes(kw)}
+              onCheckedChange={(c) => onKwTap(kw, !!c)}
               className="rounded-full px-3 py-1 text-sm"
             >
-              {k}
+              {kw}
             </Checkbox>
           ))}
         </div>
-        {errors.keywords && <p className="mt-1 text-sm text-destructive">최소 1개 선택</p>}
+        {errors.keywords && (
+          <p className="mt-1 text-sm text-destructive">
+            최소 하나 이상 선택해주세요.
+          </p>
+        )}
       </fieldset>
+
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? '등록 중…' : '제안 등록'}
       </Button>

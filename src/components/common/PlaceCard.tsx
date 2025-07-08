@@ -4,13 +4,18 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { PlaceCardData } from '@/types/place';
 import { useAuthStore } from '@/store/authStore';
 // import { useRouter } from 'next/navigation';
 
-interface PlaceCardProps extends PlaceCardData {
-  onToggleLike?: (id: string, next: boolean) => void; // wishlist 페이지에서 주입
-  className?: string;
+interface PlaceCardProps {
+   id: string;
+   name: string;
+   region: string;
+   thumbnail: string;
+  category?: string;
+   liked?: boolean;
+   onToggleLike?: (id: string, next: boolean) => void;
+   className?: string;
 }
 
 export function PlaceCard({
@@ -18,7 +23,6 @@ export function PlaceCard({
   name,
   region,
   thumbnail,
-  category,
   liked = false,
   onToggleLike,
   className,
@@ -69,9 +73,6 @@ export function PlaceCard({
 
       {/* --- 본문 --- */}
       <div className="space-y-1 p-3">
-        <span className="inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-          {category}
-        </span>
 
         <h3 className="truncate text-sm font-semibold">{name}</h3>
         <p className="truncate text-xs text-muted-foreground">{region}</p>
