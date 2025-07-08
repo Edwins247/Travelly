@@ -1,6 +1,7 @@
 // src/app/(public)/search/page.tsx
 'use client';
 
+import React, { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { FilterBar } from '@/components/search/FilterBar';
@@ -9,48 +10,45 @@ import { Pagination } from '@/components/common/Pagination';
 import { getPlaces } from '@/services/places';
 import type { PlaceCardData } from '@/types/place';
 
-export default function SearchPage() {
+// 1) 실제 조회·렌더링 로직은 이 컴포넌트 안에 담고…
+function SearchContent() {
   const params = useSearchParams();
   const router = useRouter();
 
-  // 1) URL 파라미터
   const rawKeyword = params.get('keyword') ?? '';
   const rawPage    = params.get('page')    ?? '1';
   const pageNumber = Math.max(Number(rawPage) || 1, 1);
+  const PER_PAGE   = 12;
 
-  const PER_PAGE = 12;
-
-  // 2) 상태 선언
   const [allPlaces, setAllPlaces] = useState<PlaceCardData[]>([]);
   const [loading, setLoading]     = useState(true);
   const [page, setPage]           = useState(pageNumber);
 
-  // 페이지 번호가 URL과 다르면 URL 동기화
+  // URL 페이지 번호 동기화
   useEffect(() => {
     if (page !== pageNumber) {
-      const p = new URLSearchParams(params);
-      if (page > 1) p.set('page', String(page));
-      else p.delete('page');
-      router.push(`?${p.toString()}`, { scroll: false });
+      const q = new URLSearchParams(params);
+      if (page > 1) q.set('page', String(page));
+      else         q.delete('page');
+      router.push(`?${q.toString()}`, { scroll: false });
     }
   }, [page, pageNumber, params, router]);
 
-  // 3) Firestore에서 가져오기 (클라이언트)
+  // Firestore 데이터 패칭
   useEffect(() => {
     setLoading(true);
     getPlaces({ keyword: rawKeyword })
-      .then((data) => setAllPlaces(data))
+      .then(setAllPlaces)
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [rawKeyword]);
 
-  // 4) 페이징
   const total     = allPlaces.length;
   const start     = (pageNumber - 1) * PER_PAGE;
   const pageSlice = allPlaces.slice(start, start + PER_PAGE);
 
   return (
-    <main className="mx-auto max-w-6xl space-y-6 px-4 py-10">
+    <>
       <h1 className="text-xl font-semibold">
         “{rawKeyword}” 검색 결과 ({total})
       </h1>
@@ -69,6 +67,17 @@ export default function SearchPage() {
         currentPage={pageNumber}
         onPageChange={setPage}
       />
+    </>
+  );
+}
+
+// 2) 페이지 컴포넌트에서 Suspense 로 감싸기
+export default function SearchPage() {
+  return (
+    <main className="mx-auto max-w-6xl space-y-6 px-4 py-10">
+      <Suspense fallback={<div>검색 결과를 불러오는 중…</div>}>
+        <SearchContent />
+      </Suspense>
     </main>
   );
 }
