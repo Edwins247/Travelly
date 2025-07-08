@@ -1,3 +1,4 @@
+// src/components/common/LoginModal.tsx
 'use client';
 
 import {
@@ -9,7 +10,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';            
+import { Input } from '@/components/ui/input';
 import { useForm } from 'react-hook-form';
 import { useLoginModal } from '@/store/loginModalStore';
 import { useAuthStore } from '@/store/authStore';
@@ -26,29 +27,35 @@ interface FormValues {
 export function LoginModal() {
   const { open, closeModal } = useLoginModal();
   const { loading, error }   = useAuthStore();
+
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<FormValues>({ defaultValues: { email: '', password: '' } });
+  } = useForm<FormValues>({
+    defaultValues: { email: '', password: '' },
+  });
 
   const onSubmit = handleSubmit(async ({ email, password }) => {
-    await signInOrSignUpEmail(email, password);
-    closeModal();
+      console.log('▶ form values:', { email, password });
+    try {
+      await signInOrSignUpEmail(email, password);
+      closeModal();
+    } catch {
+      // error는 useAuthStore.error로 표시됩니다
+    }
   });
 
   return (
     <Dialog open={open} onOpenChange={v => !v && closeModal()}>
-
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>로그인</DialogTitle>
           <DialogDescription>
-            이메일로 로그인&nbsp;/&nbsp;없으면 자동 회원가입 됩니다.
+            이메일로 로그인 / 없으면 자동 회원가입 됩니다.
           </DialogDescription>
         </DialogHeader>
 
-        {/* ------------------ 이메일 / 비밀번호 폼 ------------------ */}
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Input
@@ -56,7 +63,11 @@ export function LoginModal() {
               type="email"
               {...register('email', { required: '이메일을 입력하세요' })}
             />
-            {errors.email && <p className="text-destructive text-sm">{errors.email.message}</p>}
+            {errors.email && (
+              <p className="text-destructive text-sm">
+                {errors.email.message}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -66,25 +77,29 @@ export function LoginModal() {
               {...register('password', { required: '비밀번호를 입력하세요' })}
             />
             {errors.password && (
-              <p className="text-destructive text-sm">{errors.password.message}</p>
+              <p className="text-destructive text-sm">
+                {errors.password.message}
+              </p>
             )}
           </div>
 
-          {error && <p className="text-destructive text-sm">{error}</p>}
+          {error && (
+            <p className="text-destructive text-sm">
+              {error}
+            </p>
+          )}
 
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? '로딩…' : '로그인 / 회원가입'}
           </Button>
         </form>
 
-        {/* --------------------------- Divider --------------------- */}
         <div className="relative my-4 h-[1px] bg-border">
           <span className="absolute inset-0 -top-2 bg-background px-2 text-xs text-muted-foreground left-1/2 -translate-x-1/2">
             또는
           </span>
         </div>
 
-        {/* --------------------- Google 버튼 ----------------------- */}
         <DialogFooter>
           <Button
             variant="outline"

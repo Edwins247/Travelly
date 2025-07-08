@@ -1,3 +1,4 @@
+// src/components/common/Pagination.tsx
 'use client';
 
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -6,30 +7,39 @@ import { Button } from '@/components/ui/button';
 interface Props {
   perPage: number;
   total: number;
-  onPageChange?: (p: number) => void;   // ☆ 추가 (선택)
+  currentPage?: number;
+  onPageChange?: (page: number) => void;
 }
 
-export function Pagination({ perPage, total }: Props) {
+export function Pagination({
+  perPage,
+  total,
+  currentPage,
+  onPageChange,
+}: Props) {
   const router = useRouter();
   const params = useSearchParams();
 
-  const current = Number(params.get('page') ?? '1');
+  // use passed-in currentPage if provided, otherwise read from URL
+  const current = currentPage ?? Number(params.get('page') ?? '1');
   const totalPages = Math.max(1, Math.ceil(total / perPage));
 
-  /* ── helpers ───────────────────────────── */
   const go = (page: number) => {
-    const p = new URLSearchParams(params);
+    // allow parent to override navigation
+    if (onPageChange) {
+      onPageChange(page);
+      return;
+    }
 
+    const p = new URLSearchParams(params);
     if (page > 1) {
       p.set('page', String(page));
     } else {
       p.delete('page');
     }
-
     router.push(`?${p.toString()}`, { scroll: false });
   };
 
-  /* ── 버튼 렌더 ──────────────────────────── */
   const items = [];
   for (let i = 1; i <= totalPages; i++) {
     items.push(

@@ -1,40 +1,74 @@
-import { Suspense }    from 'react';
-import { FilterBar }   from '@/components/search/FilterBar';
-import { PlaceGrid }   from '@/components/home/PlaceGrid';
-import { Pagination }  from '@/components/common/Pagination';
-import { demoPlaces }  from '@/mocks/places';
+// src/app/(public)/search/page.tsx
+'use client';
 
-type SearchParams          = Record<string, string | string[] | undefined>;
-interface SearchPageProps { searchParams?: Promise<SearchParams>; }
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { FilterBar } from '@/components/search/FilterBar';
+import { PlaceGrid } from '@/components/home/PlaceGrid';
+import { Pagination } from '@/components/common/Pagination';
+import { getPlaces } from '@/services/places';
+import type { PlaceCardData } from '@/types/place';
 
-export const dynamic = 'force-dynamic';
+export default function SearchPage() {
+  const params = useSearchParams();
+  const router = useRouter();
 
-export default async function SearchPage({ searchParams }: SearchPageProps) {
-  /* 기존 로직 유지 */
-  const params          = (await searchParams) ?? {};
-  const keyword         = params.keyword ?? '';
+  // 1) URL 파라미터
+  const rawKeyword = params.get('keyword') ?? '';
+  const rawPage    = params.get('page')    ?? '1';
+  const pageNumber = Math.max(Number(rawPage) || 1, 1);
 
-  /* ── 페이지네이션 계산 ─────────────────── */
-  const PER_PAGE        = 12;
-  const pageNumber      = Number(params.page ?? '1');
-  const currentPage     = pageNumber > 0 ? pageNumber : 1;
+  const PER_PAGE = 12;
 
-  const total           = demoPlaces.length;
-  const start           = (currentPage - 1) * PER_PAGE;
-  const pageSlice       = demoPlaces.slice(start, start + PER_PAGE);
+  // 2) 상태 선언
+  const [allPlaces, setAllPlaces] = useState<PlaceCardData[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [page, setPage]           = useState(pageNumber);
+
+  // 페이지 번호가 URL과 다르면 URL 동기화
+  useEffect(() => {
+    if (page !== pageNumber) {
+      const p = new URLSearchParams(params);
+      if (page > 1) p.set('page', String(page));
+      else p.delete('page');
+      router.push(`?${p.toString()}`, { scroll: false });
+    }
+  }, [page, pageNumber, params, router]);
+
+  // 3) Firestore에서 가져오기 (클라이언트)
+  useEffect(() => {
+    setLoading(true);
+    getPlaces({ keyword: rawKeyword })
+      .then((data) => setAllPlaces(data))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [rawKeyword]);
+
+  // 4) 페이징
+  const total     = allPlaces.length;
+  const start     = (pageNumber - 1) * PER_PAGE;
+  const pageSlice = allPlaces.slice(start, start + PER_PAGE);
 
   return (
     <main className="mx-auto max-w-6xl space-y-6 px-4 py-10">
-      <h1 className="text-xl font-semibold">“{keyword}” 검색 결과</h1>
+      <h1 className="text-xl font-semibold">
+        “{rawKeyword}” 검색 결과 ({total})
+      </h1>
 
-      <Suspense fallback={null}>
-        <FilterBar />
-      </Suspense>
+      <FilterBar />
 
-      <PlaceGrid title="" places={pageSlice} />
+      {loading ? (
+        <PlaceGrid title="검색 결과" isLoading />
+      ) : (
+        <PlaceGrid title="" places={pageSlice} />
+      )}
 
-      {/* 🔽 새로 추가된 페이지네이션 */}
-      <Pagination perPage={PER_PAGE} total={total} />
+      <Pagination
+        perPage={PER_PAGE}
+        total={total}
+        currentPage={pageNumber}
+        onPageChange={setPage}
+      />
     </main>
   );
 }
