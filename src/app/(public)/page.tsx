@@ -40,7 +40,7 @@ export default function Home() {
 
   return (
     <main className="flex flex-col items-center gap-6 py-16">
-      <div className="w-full max-w-3xl space-y-6 px-4">
+      <div className="w-full max-w-6xl space-y-6 px-4">
         <SearchBar />
         <KeywordChips keywords={hotKeywords} />
         <CategoryGrid />
