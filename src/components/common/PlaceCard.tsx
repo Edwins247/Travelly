@@ -2,43 +2,21 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuthStore } from '@/store/authStore';
+import { LikeButton } from '@/components/common/LikeButton';
 // import { useRouter } from 'next/navigation';
 
 interface PlaceCardProps {
-   id: string;
-   name: string;
-   region: string;
-   thumbnail: string;
+  id: string;
+  name: string;
+  region: string;
+  thumbnail: string;
   category?: string;
-   liked?: boolean;
-   onToggleLike?: (id: string, next: boolean) => void;
-   className?: string;
+  className?: string;
 }
 
-export function PlaceCard({
-  id,
-  name,
-  region,
-  thumbnail,
-  liked = false,
-  onToggleLike,
-  className,
-}: PlaceCardProps) {
+export function PlaceCard({ id, name, region, thumbnail, className }: PlaceCardProps) {
   // const router = useRouter();
-  const { user } = useAuthStore();
-
-  const handleLike = (e: React.MouseEvent) => {
-    e.preventDefault();                // 카드 클릭 방지
-    if (!user) {
-      // 👉 로그인 모달 열기
-      document.getElementById('login-trigger')?.click();
-      return;
-    }
-    onToggleLike?.(id, !liked);
-  };
 
   return (
     <Link
@@ -59,21 +37,11 @@ export function PlaceCard({
         />
 
         {/* 찜 버튼 */}
-        <button
-          onClick={handleLike}
-          aria-label="like"
-          className={cn(
-            'absolute right-2 top-2 rounded-full bg-white/80 p-1 backdrop-blur transition',
-            liked ? 'text-destructive' : 'text-muted-foreground',
-          )}
-        >
-          <Heart className={liked ? 'fill-destructive' : 'fill-none'} size={18} />
-        </button>
+        <LikeButton placeId={id} />
       </div>
 
       {/* --- 본문 --- */}
       <div className="space-y-1 p-3">
-
         <h3 className="truncate text-sm font-semibold">{name}</h3>
         <p className="truncate text-xs text-muted-foreground">{region}</p>
       </div>

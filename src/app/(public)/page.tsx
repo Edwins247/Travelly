@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { SearchBar } from '@/components/home/SearchBar';
 import { KeywordChips } from '@/components/home/KeywordChips';
 import { CategoryGrid } from '@/components/home/CategoryGrid';
-import { PlaceGrid } from '@/components/home/PlaceGrid';
+import { PlaceGrid } from '@/components/common/PlaceGrid';
 import { getPlaces } from '@/services/places';
 import type { PlaceCardData } from '@/types/place';
 

@@ -11,6 +11,7 @@ import {
 } from 'firebase/auth';
 import { firebaseApp } from '@/services/firebase';
 import { useAuthStore } from '@/store/authStore';
+import { ensureUserDocument } from '@/services/users';
 
 const auth = getAuth(firebaseApp);
 const google = new GoogleAuthProvider();
@@ -52,6 +53,8 @@ export async function signInOrSignUpEmail(email: string, password: string) {
       try {
         const { user } = await signInWithEmailAndPassword(auth, email, password);
         success(user);
+        await ensureUserDocument(user);
+
         return user;
       } catch (innerErr) {
         const ie = innerErr as AuthError;
@@ -65,7 +68,10 @@ export async function signInOrSignUpEmail(email: string, password: string) {
     }
 
     // 3) 비밀번호 없이 다른 프로바이더로만 가입된 경우
-    if (e.code === 'auth/invalid-credential' || e.code === 'auth/account-exists-with-different-credential') {
+    if (
+      e.code === 'auth/invalid-credential' ||
+      e.code === 'auth/account-exists-with-different-credential'
+    ) {
       set.setError('이 이메일은 Google 로그인으로만 가입된 계정입니다.');
       return;
     }
@@ -82,6 +88,8 @@ export async function signInWithGoogle() {
   try {
     const { user } = await signInWithPopup(auth, google);
     success(user);
+    await ensureUserDocument(user);
+
     return user;
   } catch (e) {
     fail(e);

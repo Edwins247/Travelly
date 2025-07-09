@@ -2,6 +2,9 @@ import {
   addDoc,
   collection,
   CollectionReference,
+  doc,
+  DocumentReference,
+  getDoc,
   getDocs,
   query,
   QueryDocumentSnapshot,
@@ -66,4 +69,37 @@ export async function getPlaces({ keyword }: GetPlacesOptions): Promise<PlaceCar
       // liked 는 나중에 wishlist 와 매핑
     };
   });
+}
+
+/**
+ * placeId 배열로 PlaceCardData 객체들을 한 번에 가져옵니다.
+ */
+export async function getWishlistPlaces(
+  ids: string[]
+): Promise<PlaceCardData[]> {
+  if (ids.length === 0) return [];
+
+  // 1) DocumentReference<Place> 로 ID별 ref 생성
+  const refs = ids.map(
+    (id) => doc(db, 'places', id) as DocumentReference<Place>
+  );
+
+  // 2) 병렬로 스냅샷 조회
+  const snaps = await Promise.all(refs.map((r) => getDoc(r)));
+
+  // 3) 존재하는 문서만 필터링 & Place 타입으로 안전하게 data() 사용
+  return snaps
+    .filter((snap) => snap.exists())
+    .map((snap) => {
+      const data = snap.data(); // data는 Place 타입
+      return {
+        id: snap.id,
+        name: data.name,
+        region: data.location.region,
+        thumbnail:
+          Array.isArray(data.imageUrls) && data.imageUrls.length > 0
+            ? data.imageUrls[0]
+            : '/placeholder.png',
+      };
+    });
 }
