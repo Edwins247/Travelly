@@ -26,10 +26,6 @@ export function PlaceGrid({ title, places = [], isLoading = false }: PlaceGridPr
               <PlaceCard
                 key={p.id}
                 {...p}
-                onToggleLike={(id, next) => {
-                  /* TODO: wishlist update 함수 호출 */
-                  console.log('toggle like', id, next);
-                }}
               />
             ))}
       </div>

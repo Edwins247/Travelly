@@ -2,6 +2,8 @@ import {
   addDoc,
   collection,
   CollectionReference,
+  doc,
+  getDoc,
   getDocs,
   query,
   QueryDocumentSnapshot,
@@ -66,4 +68,30 @@ export async function getPlaces({ keyword }: GetPlacesOptions): Promise<PlaceCar
       // liked 는 나중에 wishlist 와 매핑
     };
   });
+}
+
+/**
+ * placeId 배열로 PlaceCardData 객체들을 한 번에 가져옵니다.
+ */
+export async function getWishlistPlaces(
+  ids: string[]
+): Promise<PlaceCardData[]> {
+  if (ids.length === 0) return [];
+  // Firestore에서 다중 조회
+  const refs = ids.map((id) => doc(db, 'places', id));
+  const snaps = await Promise.all(refs.map((r) => getDoc(r)));
+  return snaps
+    .filter((snap) => snap.exists())
+    .map((snap) => {
+      const data = snap.data() as any;
+      return {
+        id: snap.id,
+        name: data.name,
+        region: data.location?.region ?? '',
+        thumbnail:
+          Array.isArray(data.imageUrls) && data.imageUrls.length > 0
+            ? data.imageUrls[0]
+            : '/placeholder.png',
+      };
+    });
 }

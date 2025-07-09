@@ -5,7 +5,7 @@ import React, { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { FilterBar } from '@/components/search/FilterBar';
-import { PlaceGrid } from '@/components/home/PlaceGrid';
+import { PlaceGrid } from '@/components/common/PlaceGrid';
 import { Pagination } from '@/components/common/Pagination';
 import { getPlaces } from '@/services/places';
 import type { PlaceCardData } from '@/types/place';
