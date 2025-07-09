@@ -1,51 +1,65 @@
 // src/app/(public)/search/page.tsx
 'use client';
-
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import { FilterBar } from '@/components/search/FilterBar';
 import { PlaceGrid } from '@/components/common/PlaceGrid';
 import { Pagination } from '@/components/common/Pagination';
-import { getPlaces } from '@/services/places';
+import { getPlaces, type GetPlacesOptions } from '@/services/places';
 import type { PlaceCardData } from '@/types/place';
 
-// 1) 실제 조회·렌더링 로직은 이 컴포넌트 안에 담고…
 function SearchContent() {
   const params = useSearchParams();
   const router = useRouter();
 
+  // 1) URL에서 모든 필터 꺼내기
   const rawKeyword = params.get('keyword') ?? '';
-  const rawPage    = params.get('page')    ?? '1';
-  const pageNumber = Math.max(Number(rawPage) || 1, 1);
+  const rawRegion  = (params.get('region') as 'domestic' | 'abroad') ?? '';
+  const rawSeason  = params.get('season') ?? '';
+  const rawBudget  = params.get('budget') ?? '';
+  const rawPage    = Number(params.get('page') ?? '1');
+
   const PER_PAGE   = 12;
 
-  const [allPlaces, setAllPlaces] = useState<PlaceCardData[]>([]);
-  const [loading, setLoading]     = useState(true);
-  const [page, setPage]           = useState(pageNumber);
+  // 2) State
+  const [places, setPlaces]   = useState<PlaceCardData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage]       = useState(rawPage);
 
-  // URL 페이지 번호 동기화
+  // 3) Sync page → URL
   useEffect(() => {
-    if (page !== pageNumber) {
+    if (page !== rawPage) {
       const q = new URLSearchParams(params);
       if (page > 1) q.set('page', String(page));
-      else         q.delete('page');
+      else          q.delete('page');
       router.push(`?${q.toString()}`, { scroll: false });
     }
-  }, [page, pageNumber, params, router]);
+  }, [page, rawPage, params, router]);
 
-  // Firestore 데이터 패칭
+  // 4) Whenever any filter changes, reset page to 1 & fetch
+  useEffect(() => {
+    setPage(1);
+  }, [rawKeyword, rawRegion, rawSeason, rawBudget]);
+
+  // 5) Fetch from Firestore on any filter change
   useEffect(() => {
     setLoading(true);
-    getPlaces({ keyword: rawKeyword })
-      .then(setAllPlaces)
+    const options: GetPlacesOptions = {
+      keyword: rawKeyword,
+      region:  rawRegion || undefined,
+      season:  rawSeason || undefined,
+      budget:  rawBudget || undefined,
+    };
+    getPlaces(options)
+      .then(setPlaces)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [rawKeyword]);
+  }, [rawKeyword, rawRegion, rawSeason, rawBudget]);
 
-  const total     = allPlaces.length;
-  const start     = (pageNumber - 1) * PER_PAGE;
-  const pageSlice = allPlaces.slice(start, start + PER_PAGE);
+  // 6) Pagination slice
+  const total     = places.length;
+  const start     = (page - 1) * PER_PAGE;
+  const slice     = places.slice(start, start + PER_PAGE);
 
   return (
     <>
@@ -58,20 +72,19 @@ function SearchContent() {
       {loading ? (
         <PlaceGrid title="검색 결과" isLoading />
       ) : (
-        <PlaceGrid title="" places={pageSlice} />
+        <PlaceGrid title="" places={slice} />
       )}
 
       <Pagination
         perPage={PER_PAGE}
         total={total}
-        currentPage={pageNumber}
+        currentPage={page}
         onPageChange={setPage}
       />
     </>
   );
 }
 
-// 2) 페이지 컴포넌트에서 Suspense 로 감싸기
 export default function SearchPage() {
   return (
     <main className="mx-auto max-w-6xl space-y-6 px-4 py-10">
