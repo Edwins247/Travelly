@@ -6,6 +6,7 @@ import {
   DocumentReference,
   getDoc,
   getDocs,
+  Query,
   query,
   QueryDocumentSnapshot,
   serverTimestamp,
@@ -43,30 +44,57 @@ export async function addPlace(data: PlaceInput): Promise<string> {
   return docRef.id;
 }
 
-interface GetPlacesOptions {
+export interface GetPlacesOptions {
   keyword?: string;
-  // 나중에 region, season, budget 추가 가능
+  region?: 'domestic' | 'abroad';
+  season?: string;
+  budget?: string;
 }
 
-export async function getPlaces({ keyword }: GetPlacesOptions): Promise<PlaceCardData[]> {
-  // 1) 컬렉션 레퍼런스에 제네릭으로 Place 타입을 붙여줍니다.
+export async function getPlaces({
+  keyword,
+  region,
+  season,
+  budget,
+}: GetPlacesOptions): Promise<PlaceCardData[]> {
+  // Base ref with Place type
   const col = collection(db, 'places') as CollectionReference<Place>;
+  let q: Query<Place> = col;
 
-  // 2) 키워드가 있으면 where 절 추가
-  const q = keyword ? query(col, where('keywords', 'array-contains', keyword)) : col;
+  // 1) 키워드
+  if (keyword) {
+    q = query(q, where('keywords', 'array-contains', keyword));
+  }
 
-  // 3) 조회
+  // 2) regionType 필터
+  if (region === 'domestic') {
+    q = query(q, where('regionType', '==', '국내'));
+  } else if (region === 'abroad') {
+    q = query(q, where('regionType', '==', '해외'));
+  }
+
+  // 3) season 필터
+  if (season) {
+    q = query(q, where('seasonTags', 'array-contains', season));
+  }
+
+  // 4) budget 필터
+  if (budget) {
+    q = query(q, where('budgetLevel', '==', budget));
+  }
+
+  // Execute and map
   const snap = await getDocs(q);
-
-  // 4) Snapshot 에서 Place 타입으로 data() 를 받습니다.
   return snap.docs.map((doc: QueryDocumentSnapshot<Place>) => {
-    const data = doc.data(); // data의 타입이 Place 입니다.
+    const data = doc.data();
     return {
       id: doc.id,
       name: data.name,
       region: data.location.region,
-      thumbnail: data.imageUrls.length > 0 ? data.imageUrls[0] : '/placeholder.jpg',
-      // liked 는 나중에 wishlist 와 매핑
+      thumbnail:
+        Array.isArray(data.imageUrls) && data.imageUrls.length > 0
+          ? data.imageUrls[0]
+          : '/placeholder.jpg',
     };
   });
 }
@@ -74,15 +102,11 @@ export async function getPlaces({ keyword }: GetPlacesOptions): Promise<PlaceCar
 /**
  * placeId 배열로 PlaceCardData 객체들을 한 번에 가져옵니다.
  */
-export async function getWishlistPlaces(
-  ids: string[]
-): Promise<PlaceCardData[]> {
+export async function getWishlistPlaces(ids: string[]): Promise<PlaceCardData[]> {
   if (ids.length === 0) return [];
 
   // 1) DocumentReference<Place> 로 ID별 ref 생성
-  const refs = ids.map(
-    (id) => doc(db, 'places', id) as DocumentReference<Place>
-  );
+  const refs = ids.map((id) => doc(db, 'places', id) as DocumentReference<Place>);
 
   // 2) 병렬로 스냅샷 조회
   const snaps = await Promise.all(refs.map((r) => getDoc(r)));
@@ -102,4 +126,15 @@ export async function getWishlistPlaces(
             : '/placeholder.png',
       };
     });
+}
+
+/**
+ * 키워드 컬렉션에서 입력값으로 시작하는 키워드를 최대 limit개 가져옵니다.
+ */
+export async function fetchKeywordSuggestions(prefix: string, limit = 5): Promise<string[]> {
+  if (!prefix) return [];
+  const col = collection(db, 'keywords');
+  const q = query(col, where('keyword', '>=', prefix), where('keyword', '<=', prefix + '\uf8ff'));
+  const snap = await getDocs(q);
+  return snap.docs.slice(0, limit).map((d) => d.data().keyword);
 }

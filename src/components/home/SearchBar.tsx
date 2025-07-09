@@ -1,84 +1,72 @@
+// src/components/search/SearchBar.tsx
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Input } from '@/components/ui/input';         
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Search as SearchIcon } from 'lucide-react';
+import { useDebounce } from '@/hooks/useDebounce';
+import { fetchKeywordSuggestions } from '@/services/places';
 
-/* ------------------------------------------------------------------
-   UI 전용 컴포넌트 – 아직 Firestore 연결 X
-   TODO: 🔍 키 입력 → firestore 키워드 자동완성 fetch 후 suggestions 상태로 세팅
-------------------------------------------------------------------- */
-interface SearchBarProps {
-  /** 임시 자동완성 키워드 (없으면 기본 더미) */
-  defaultSuggestions?: string[];
-  className?: string;
-}
-
-export function SearchBar({
-  defaultSuggestions = ['혼자 힐링', '겨울 실내', '가족 여행'],
-  className,
-}: SearchBarProps) {
+export function SearchBar() {
   const router = useRouter();
-  const [value, setValue] = useState('');
-  const [open, setOpen]   = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [input, setInput] = useState('');
+  const debouncedInput = useDebounce(input, 300);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showList, setShowList] = useState(false);
 
-  const suggestions = defaultSuggestions.filter(k =>
-    k.toLowerCase().includes(value.toLowerCase()),
-  );
+  // debouncedInput 변경 시 제안 키워드 조회
+  useEffect(() => {
+    let active = true;
+    const term = debouncedInput.trim();
+    if (term) {
+      fetchKeywordSuggestions(term).then((list) => {
+        if (active) setSuggestions(list);
+      });
+    } else {
+      setSuggestions([]);
+    }
+    return () => {
+      active = false;
+    };
+  }, [debouncedInput]);
 
-  const handleSubmit = (keyword: string) => {
-    if (!keyword.trim()) return;
-    router.push(`/search?keyword=${encodeURIComponent(keyword.trim())}`);
-    setOpen(false);
-    setValue('');
-    inputRef.current?.blur();
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const term = input.trim();
+    if (!term) return;
+    router.push(`/search?keyword=${encodeURIComponent(term)}`);
+    setShowList(false);
   };
 
   return (
-    <div className={cn('relative w-full max-w-xl', className)}>
-      {/* ----------------- 검색 입력 ----------------- */}
-      <form
-        onSubmit={e => {
-          e.preventDefault();
-          handleSubmit(value);
-        }}
-      >
-        <div className="flex items-center rounded-full bg-muted pl-4 pr-2 py-2 ring-1 ring-border focus-within:ring-primary/60">
-          <Input
-            ref={inputRef}
-            value={value}
-            onChange={e => {
-              setValue(e.target.value);
-              setOpen(true);
-            }}
-            onFocus={() => setOpen(true)}
-            placeholder="어디로 떠나고 싶으신가요?"
-            className="border-none bg-transparent focus-visible:ring-0"
-          />
-
-          <Button size="icon" type="submit" variant="ghost">
-            <Search className="h-5 w-5 text-muted-foreground" />
-          </Button>
-        </div>
+    <div className="relative w-full">
+      <form onSubmit={onSubmit} className="flex">
+        <Input
+          value={input}
+          placeholder="어디로 떠나고 싶으신가요?"
+          onFocus={() => setShowList(true)}
+          onBlur={() => setTimeout(() => setShowList(false), 150)}
+          onChange={(e) => setInput(e.target.value)}
+        />
+        <Button type="submit" className="ml-2">
+          <SearchIcon size={20} />
+        </Button>
       </form>
 
-      {/* ----------------- 자동완성 리스트 ----------------- */}
-      {open && suggestions.length > 0 && (
-        <ul
-          className="absolute z-10 mt-1 w-full overflow-hidden rounded-md border bg-background shadow-lg"
-          onMouseLeave={() => setOpen(false)}
-        >
-          {suggestions.map(k => (
+      {showList && suggestions.length > 0 && (
+        <ul className="absolute top-full left-0 right-0 z-10 mt-1 max-h-60 overflow-auto rounded-md border bg-white shadow">
+          {suggestions.map((kw) => (
             <li
-              key={k}
-              onClick={() => handleSubmit(k)}
+              key={kw}
               className="cursor-pointer px-4 py-2 hover:bg-muted"
+              onMouseDown={() => {
+                setInput(kw);
+                router.push(`/search?keyword=${encodeURIComponent(kw)}`);
+              }}
             >
-              {k}
+              {kw}
             </li>
           ))}
         </ul>
