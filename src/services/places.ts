@@ -138,3 +138,27 @@ export async function fetchKeywordSuggestions(prefix: string, limit = 5): Promis
   const snap = await getDocs(q);
   return snap.docs.slice(0, limit).map((d) => d.data().keyword);
 }
+
+export async function getPlaceById(id: string): Promise<Place | null> {
+  // Place 인터페이스에 id까지 포함돼 있으므로, 제네릭으로 Omit<Place,'id'>를 붙이고
+  // 반환값에는 spread로 id를 추가합니다.
+  const ref = doc(
+    db,
+    'places',
+    id
+  ) as DocumentReference<Omit<Place, 'id'>>;
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    return null;
+  }
+
+  // data는 Omit<Place,'id'> 타입
+  const data = snap.data() as Omit<Place, 'id'>;
+
+  // Place 타입 완성
+  return {
+    id: snap.id,
+    ...data,
+  };
+}
