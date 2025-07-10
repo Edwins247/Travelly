@@ -20,6 +20,28 @@ import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
 
 // src/services/places.ts
 
+export interface PlaceDTO {
+  id: string;
+  name: string;
+  description?: string;
+  imageUrls: string[];
+  location: {
+    region: string;
+    district?: string;
+  };
+  regionType: '국내' | '해외';
+  seasonTags: string[];
+  budgetLevel: '저예산' | '중간' | '고급';
+  keywords: string[];
+  createdBy: string;
+  // 원시 문자열로 넘깁니다
+  createdAt: string;
+  stats: {
+    likes: number;
+    reviewCount: number;
+  };
+}
+
 // 1) 빈 틀만 생성하고 ID 리턴 (최초 호출)
 export async function addPlace(): Promise<string> {
   const ref = doc(collection(db, 'places'));
@@ -127,27 +149,32 @@ export async function fetchKeywordSuggestions(prefix: string, limit = 5): Promis
   return snap.docs.slice(0, limit).map((d) => d.data().keyword);
 }
 
-export async function getPlaceById(id: string): Promise<Place | null> {
-  // Place 인터페이스에 id까지 포함돼 있으므로, 제네릭으로 Omit<Place,'id'>를 붙이고
-  // 반환값에는 spread로 id를 추가합니다.
-  const ref = doc(
-    db,
-    'places',
-    id
-  ) as DocumentReference<Omit<Place, 'id'>>;
+export async function getPlaceById(id: string): Promise<PlaceDTO | null> {
+  const ref = doc(db, 'places', id) as DocumentReference<Omit<Place, 'id'>>;
   const snap = await getDoc(ref);
+  if (!snap.exists()) return null;
 
-  if (!snap.exists()) {
-    return null;
-  }
+  const d = snap.data() as Omit<Place, 'id'>;
 
-  // data는 Omit<Place,'id'> 타입
-  const data = snap.data() as Omit<Place, 'id'>;
-
-  // Place 타입 완성
   return {
     id: snap.id,
-    ...data,
+    name: d.name,
+    description: d.description,
+    imageUrls: d.imageUrls,
+    location: d.location,
+    regionType: d.regionType,
+    seasonTags: d.seasonTags,
+    budgetLevel: d.budgetLevel,
+    keywords: d.keywords,
+    createdBy: d.createdBy,
+    // Timestamp → Date → ISO 문자열
+    createdAt: d.createdAt.toDate().toISOString(),
+    stats: {
+      // Firestore 쪽에서 increment 로 관리했다면 number 여야 합니다.
+      likes: typeof d.stats.likes === 'number' ? d.stats.likes : 0,
+      reviewCount:
+        typeof d.stats.reviewCount === 'number' ? d.stats.reviewCount : 0,
+    },
   };
 }
 
