@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { FilterBar } from '@/components/search/FilterBar';
 import { PlaceGrid } from '@/components/common/PlaceGrid';
 import { Pagination } from '@/components/common/Pagination';
-import { getPlaces, type GetPlacesOptions } from '@/services/places';
+import { getPlaces, GetPlacesOptions } from '@/services/places';
 import type { PlaceCardData } from '@/types/place';
 
 function SearchContent() {
