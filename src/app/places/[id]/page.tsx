@@ -5,6 +5,7 @@ import KeywordBadgeList from '@/components/place/KeywordBadgeList';
 import StatsInfo from '@/components/place/StatsInfo';
 import BasicInfoTable from '@/components/place/BasicInfoTable';
 import { LikeButton } from '@/components/common/LikeButton'; // 여기만 변경
+import { ReviewList } from '@/components/place/ReviewList';
 
 export default async function PlacePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -33,8 +34,9 @@ export default async function PlacePage({ params }: { params: Promise<{ id: stri
         description={place.description}
         location={place.location}
         createdBy={place.createdBy}
-        createdAt={place.createdAt.toDate()} // Firestore Timestamp → Date
+        createdAt={place.createdAt} // Firestore Timestamp → Date
       />
+      <ReviewList placeId={place.id} />
     </main>
   );
 }

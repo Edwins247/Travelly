@@ -2,19 +2,14 @@
 'use client';
 
 import React from 'react';
-import {
-  Table,
-  TableBody,
-  TableRow,
-  TableCell,
-} from '@/components/ui/table';
+import { Table, TableBody, TableRow, TableCell } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
 
 interface BasicInfoTableProps {
   description?: string;
   location: { region: string; district?: string };
   createdBy: string;
-  createdAt: Date;
+  createdAt: string;
 }
 
 export default function BasicInfoTable({
@@ -23,6 +18,15 @@ export default function BasicInfoTable({
   createdBy,
   createdAt,
 }: BasicInfoTableProps) {
+  const d = new Date(createdAt);
+
+  // ko-KR 을 명시
+  const dateStr = d.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+
   return (
     <section className="space-y-2">
       <h2 className="text-lg font-semibold">Basic Information</h2>
@@ -55,7 +59,9 @@ export default function BasicInfoTable({
             <TableCell>
               <Label>Created at</Label>
             </TableCell>
-            <TableCell>{createdAt.toLocaleDateString()}</TableCell>
+            <TableCell>
+              {dateStr}
+            </TableCell>
           </TableRow>
         </TableBody>
       </Table>
