@@ -31,3 +31,23 @@ export interface PlaceCardData {
   thumbnail: string;
   liked?: boolean;
 }
+
+export interface PlaceInput {
+  name: string;
+  description?: string;
+  // imageUrl?: string;  ← 제거
+  imageUrls?: string[];    // ← 추가
+  location: { region: string; district?: string };
+  regionType: '국내' | '해외';
+  seasonTags: string[];
+  budgetLevel: '저예산' | '중간' | '고급';
+  keywords?: string[];
+  createdBy: string;
+}
+
+export interface GetPlacesOptions {
+  keyword?: string;
+  region?: 'domestic' | 'abroad';
+  season?: string;
+  budget?: string;
+}
