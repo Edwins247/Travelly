@@ -1,3 +1,4 @@
+// src/services/reviews.ts
 import {
   collection,
   addDoc,
@@ -9,41 +10,64 @@ import {
   updateDoc,
   doc,
   increment,
+  type CollectionReference,
+  type QueryDocumentSnapshot,
+  type Timestamp,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { Review, ReviewInput } from '@/types/review';
+import type { Review, ReviewInput } from '@/types/review';
+
+/**
+ * Firestore 에 저장된 raw 리뷰 타입:
+ * - Review 에서 id, createdAt(Date) 를 뺀 뒤,
+ * - createdAt 은 Firestore Timestamp 로.
+ */
+interface ReviewFirestore extends Omit<Review, 'id' | 'createdAt'> {
+  createdAt: Timestamp;
+}
 
 /** 특정 장소의 후기 전체를 최근순으로 가져옵니다. */
 export async function getReviewsByPlace(placeId: string): Promise<Review[]> {
+  // 1) 컬렉션 레퍼런스에 제네릭 지정
+  const reviewsCol = collection(db, 'reviews') as CollectionReference<ReviewFirestore>;
+
+  // 2) where + orderBy
   const q = query(
-    collection(db, 'reviews'),
+    reviewsCol,
     where('placeId', '==', placeId),
     orderBy('createdAt', 'desc')
   );
+
+  // 3) 조회
   const snap = await getDocs(q);
-  return snap.docs.map((d) => {
-    const data = d.data() as Omit<Review, 'id' | 'createdAt'> & { createdAt: any };
+
+  // 4) Snapshot → Review[]
+  return snap.docs.map((docSnap: QueryDocumentSnapshot<ReviewFirestore>) => {
+    const data = docSnap.data();
     return {
-      id: d.id,
-      ...data,
+      id: docSnap.id,
+      placeId: data.placeId,
+      content: data.content,
+      userTags: data.userTags,
+      userId: data.userId,
+      // Timestamp → Date
       createdAt: data.createdAt.toDate(),
     };
   });
 }
 
-/** 후기 추가 + 장소 키워드·리뷰 카운트 업데이트 */
-export async function addReview(input: ReviewInput) {
+/** 후기 추가 + places/{placeId}.stats.reviewCount 를 1 올려줍니다. */
+export async function addReview(input: ReviewInput): Promise<string> {
   // 1) 리뷰 문서 추가
   const ref = await addDoc(collection(db, 'reviews'), {
     ...input,
     createdAt: serverTimestamp(),
   });
 
-  // 2) places/{placeId}.stats.reviewCount 를 1씩 올려주기
+  // 2) reviewCount 증가
   const placeRef = doc(db, 'places', input.placeId);
   await updateDoc(placeRef, {
     'stats.reviewCount': increment(1),
-    // keywords 축적은 arrayUnion 으로 따로 구현하세요
   });
 
   return ref.id;
