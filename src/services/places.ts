@@ -1,5 +1,4 @@
 import {
-  addDoc,
   collection,
   CollectionReference,
   doc,
@@ -10,45 +9,34 @@ import {
   query,
   QueryDocumentSnapshot,
   serverTimestamp,
+  setDoc,
+  updateDoc,
   where,
 } from 'firebase/firestore';
-import { db } from './firebase';
-import { Place, PlaceCardData } from '@/types/place';
+import { db, storage } from '@/services/firebase';
+import { GetPlacesOptions, Place, PlaceCardData, PlaceInput } from '@/types/place';
+import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
 
-// 타입 정의
-export interface PlaceInput {
-  name: string;
-  description?: string;
-  imageUrl?: string;
-  location: { region: string; district?: string };
-  regionType: '국내' | '해외';
-  seasonTags: string[];
-  budgetLevel: '저예산' | '중간' | '고급';
-  keywords?: string[];
-  createdBy: string;
-  // keywords는 리뷰 작성 시 누적되므로 초기값은 없어도 됨
-}
 
 // src/services/places.ts
 
-export async function addPlace(data: PlaceInput): Promise<string> {
-  const { createdBy, ...rest } = data;
-  const docRef = await addDoc(collection(db, 'places'), {
-    ...rest,
-    createdBy, // ← 여기 추가
-    imageUrls: data.imageUrl ? [data.imageUrl] : [],
+// 1) 빈 틀만 생성하고 ID 리턴 (최초 호출)
+export async function addPlace(): Promise<string> {
+  const ref = doc(collection(db, 'places'));
+  await setDoc(ref, {
     stats: { likes: 0, reviewCount: 0 },
-    keywords: data.keywords || [], // 필요시
     createdAt: serverTimestamp(),
   });
-  return docRef.id;
+  return ref.id;
 }
 
-export interface GetPlacesOptions {
-  keyword?: string;
-  region?: 'domestic' | 'abroad';
-  season?: string;
-  budget?: string;
+// 2) 실제 필드 채우기 (업데이트)
+export async function updatePlace(id: string, data: PlaceInput) {
+  const ref = doc(db, 'places', id);
+  await updateDoc(ref, {
+    ...data,
+    // createdAt나 stats는 그대로 두고, 필요한 필드만 덮어씌웁니다.
+  });
 }
 
 export async function getPlaces({
@@ -162,3 +150,28 @@ export async function getPlaceById(id: string): Promise<Place | null> {
     ...data,
   };
 }
+
+
+export function uploadPlaceImage(file: File, placeId: string): Promise<string> {
+  const path = `places/${placeId}/${Date.now()}_${file.name}`;
+  const storageRef = ref(storage, path);
+  const task = uploadBytesResumable(storageRef, file);
+
+  return new Promise((resolve, reject) => {
+    task.on(
+      'state_changed',
+      null,
+      reject,
+      async () => {
+        try {
+          const url = await getDownloadURL(storageRef);
+          resolve(url);
+        } catch (e) {
+          reject(e);
+        }
+      }
+    );
+  });
+}
+
+

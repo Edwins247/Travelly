@@ -1,23 +1,18 @@
 // src/components/contribute/ContributeForm.tsx
 'use client';
 
-import { useAuthStore } from '@/store/authStore';
+import React from 'react';
 import { useForm } from 'react-hook-form';
-import { addPlace, PlaceInput } from '@/services/places';
-
+import { addPlace, updatePlace, uploadPlaceImage } from '@/services/places';
+import { useAuthStore } from '@/store/authStore';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 
+// 옵션 리스트
 const regions = ['서울', '경기', '제주', '부산', '해외'];
 const seasons = ['봄', '여름', '가을', '겨울'];
 const budgets = ['저예산', '중간', '고급'];
@@ -26,7 +21,7 @@ const keywordsOptions = ['가족여행', '힐링', '사진맛집', '반려동물
 export interface PlaceFormValues {
   name: string;
   description?: string;
-  imageUrl?: string;
+  imageFile?: FileList;
   region: string;
   regionType: '국내' | '해외';
   seasonTag: string;
@@ -43,41 +38,50 @@ export function ContributeForm() {
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<PlaceFormValues>({
-    defaultValues: {
-      regionType: '국내',
-      keywords: [],
-    },
+    defaultValues: { regionType: '국내', keywords: [] },
   });
 
+  // 키워드 선택
   const kwSel = watch('keywords');
   const onKwTap = (kw: string, checked: boolean) =>
     setValue(
       'keywords',
-      checked ? [...kwSel, kw] : kwSel.filter((x) => x !== kw),
+      checked ? [...kwSel, kw] : kwSel.filter((x) => x !== kw)
     );
 
-  const onSubmit = async (values: PlaceFormValues) => {
+  // 폼 제출 핸들러
+  const onSubmit = async (data: PlaceFormValues) => {
     if (!user) {
       alert('로그인 후 이용해주세요.');
       return;
     }
 
-    // PlaceInput 인터페이스에 맞게 변환
-    const payload: PlaceInput = {
-      name: values.name,
-      description: values.description,
-      imageUrl: values.imageUrl,
-      location: { region: values.region },
-      regionType: values.regionType,
-      seasonTags: [values.seasonTag],
-      budgetLevel: values.budgetLevel as '저예산' | '중간' | '고급',
-      keywords: values.keywords,
-      createdBy: user.uid,    
-    };
+    // 1) 빈 문서 생성
+    const placeId = await addPlace();
 
     try {
-      const newId = await addPlace(payload);
-      alert(`여행지 제안이 등록되었습니다! (ID: ${newId})`);
+      // 2) 이미지 업로드
+      let imageUrls: string[] = [];
+      const file = data.imageFile?.[0];
+      if (file) {
+        const url = await uploadPlaceImage(file, placeId);
+        imageUrls = [url];
+      }
+
+      // 3) 문서 업데이트
+      await updatePlace(placeId, {
+        name: data.name,
+        description: data.description,
+        imageUrls,
+        location: { region: data.region },
+        regionType: data.regionType,
+        seasonTags: [data.seasonTag],
+        budgetLevel: data.budgetLevel as '저예산' | '중간' | '고급',
+        keywords: data.keywords,
+        createdBy: user.uid,
+      });
+
+      alert('여행지 제안이 등록되었습니다 🎉');
     } catch (e) {
       console.error(e);
       alert('제안 등록 중 오류가 발생했습니다.');
@@ -93,9 +97,7 @@ export function ContributeForm() {
           id="name"
           {...register('name', { required: '필수 입력입니다.' })}
         />
-        {errors.name && (
-          <p className="text-sm text-destructive">{errors.name.message}</p>
-        )}
+        {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
       </div>
 
       {/* 설명 */}
@@ -104,27 +106,18 @@ export function ContributeForm() {
         <Textarea id="description" {...register('description')} rows={3} />
       </div>
 
-      {/* 이미지 URL */}
+      {/* 이미지 업로드 */}
       <div>
-        <Label htmlFor="imageUrl">대표 이미지 URL</Label>
+        <Label htmlFor="imageFile">대표 이미지 업로드</Label>
         <Input
-          id="imageUrl"
-          placeholder="https://"
-          {...register('imageUrl', {
-            pattern: {
-              value: /^https?:\/\//,
-              message: '유효한 URL을 입력해주세요.',
-            },
-          })}
+          id="imageFile"
+          type="file"
+          accept="image/*"
+          {...register('imageFile')}
         />
-        {errors.imageUrl && (
-          <p className="text-sm text-destructive">
-            {errors.imageUrl.message}
-          </p>
-        )}
       </div>
 
-      {/* 지역 선택 */}
+      {/* 지역 & 국내/해외 */}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Region*</Label>
@@ -137,23 +130,17 @@ export function ContributeForm() {
             </SelectTrigger>
             <SelectContent>
               {regions.map((r) => (
-                <SelectItem key={r} value={r}>
-                  {r}
-                </SelectItem>
+                <SelectItem key={r} value={r}>{r}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          {errors.region && (
-            <p className="text-sm text-destructive">필수 선택입니다.</p>
-          )}
+          {errors.region && <p className="text-sm text-destructive">필수 선택입니다.</p>}
         </div>
         <div>
           <Label>국내/해외*</Label>
           <Select
             value={watch('regionType')}
-            onValueChange={(v) =>
-              setValue('regionType', v as '국내' | '해외')
-            }
+            onValueChange={(v) => setValue('regionType', v as '국내' | '해외')}
           >
             <SelectTrigger>
               <SelectValue />
@@ -166,7 +153,7 @@ export function ContributeForm() {
         </div>
       </div>
 
-      {/* 계절/예산 */}
+      {/* 계절 & 예산 */}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>추천 계절*</Label>
@@ -179,15 +166,11 @@ export function ContributeForm() {
             </SelectTrigger>
             <SelectContent>
               {seasons.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s}
-                </SelectItem>
+                <SelectItem key={s} value={s}>{s}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          {errors.seasonTag && (
-            <p className="text-sm text-destructive">필수 선택입니다.</p>
-          )}
+          {errors.seasonTag && <p className="text-sm text-destructive">필수 선택입니다.</p>}
         </div>
         <div>
           <Label>예산대*</Label>
@@ -200,15 +183,11 @@ export function ContributeForm() {
             </SelectTrigger>
             <SelectContent>
               {budgets.map((b) => (
-                <SelectItem key={b} value={b}>
-                  {b}
-                </SelectItem>
+                <SelectItem key={b} value={b}>{b}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          {errors.budgetLevel && (
-            <p className="text-sm text-destructive">필수 선택입니다.</p>
-          )}
+          {errors.budgetLevel && <p className="text-sm text-destructive">필수 선택입니다.</p>}
         </div>
       </div>
 
@@ -227,11 +206,7 @@ export function ContributeForm() {
             </Checkbox>
           ))}
         </div>
-        {errors.keywords && (
-          <p className="mt-1 text-sm text-destructive">
-            최소 하나 이상 선택해주세요.
-          </p>
-        )}
+        {errors.keywords && <p className="mt-1 text-sm text-destructive">최소 하나 이상 선택해주세요.</p>}
       </fieldset>
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
