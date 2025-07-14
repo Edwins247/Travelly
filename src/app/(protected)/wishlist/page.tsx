@@ -6,6 +6,7 @@ import { useWishlist } from '@/hooks/useWishlist';
 import { getWishlistPlaces } from '@/services/places';
 import { PlaceGrid } from '@/components/common/PlaceGrid';
 import { Pagination } from '@/components/common/Pagination';
+import { PageLoader } from '@/components/common/PageLoader';
 import type { PlaceCardData } from '@/types/place';
 
 export default function WishlistPage() {
@@ -23,9 +24,9 @@ export default function WishlistPage() {
     }
   }, [wishlist]);
 
-  // 로딩 중엔 스켈레톤
+  // 로딩 중엔 전체 페이지 로더
   if (wLoading) {
-    return <PlaceGrid title="찜 목록" isLoading />;
+    return <PageLoader showHeader={false} showFooter={false} />;
   }
 
   // 아무것도 없으면 메시지

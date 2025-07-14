@@ -28,13 +28,13 @@ export default function Footer() {
 
           {/* ───────────── Icon Row ───────────── */}
           <div className="flex gap-3">
-            <Link href="https://github.com/your-org/travelly" aria-label="Phone-Call">
+            <Link href="tel:+82-10-1234-5678" aria-label="전화 연결">
               <Phone className="h-5 w-5 hover:text-foreground" />
             </Link>
-            <Link href="mailto:team@travel.ly" aria-label="E-mail">
+            <Link href="mailto:abc123@gamil.com" aria-label="이메일 문의">
               <Mail className="h-5 w-5 hover:text-foreground" />
             </Link>
-            <Link href="https://www.figma.com/file/xxx" aria-label="FAQ">
+            <Link href="/faq" aria-label="FAQ">
               <MessageCircleQuestionMark className="h-5 w-5 hover:text-foreground" />
             </Link>
           </div>

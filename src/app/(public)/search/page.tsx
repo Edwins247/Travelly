@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { FilterBar } from '@/components/search/FilterBar';
 import { PlaceGrid } from '@/components/common/PlaceGrid';
 import { Pagination } from '@/components/common/Pagination';
+import { PageLoader } from '@/components/common/PageLoader';
 import { getPlaces } from '@/services/places';
 import type { PlaceCardData, GetPlacesOptions } from '@/types/place';
 
@@ -60,6 +61,11 @@ function SearchContent() {
   const total     = places.length;
   const start     = (page - 1) * PER_PAGE;
   const slice     = places.slice(start, start + PER_PAGE);
+
+  // 초기 로딩 중일 때는 전체 페이지 로더 표시
+  if (loading && places.length === 0) {
+    return <PageLoader showHeader={false} showFooter={false} />;
+  }
 
   return (
     <>

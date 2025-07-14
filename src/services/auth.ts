@@ -11,11 +11,13 @@ import {
 } from 'firebase/auth';
 import { firebaseApp } from '@/services/firebase';
 import { useAuthStore } from '@/store/authStore';
+import { useLoginModal } from '@/store/loginModalStore';
 import { ensureUserDocument } from '@/services/users';
 
 const auth = getAuth(firebaseApp);
 const google = new GoogleAuthProvider();
 const set = useAuthStore.getState();
+const modalSet = useLoginModal.getState();
 
 function start() {
   set.setLoad(true);
@@ -24,6 +26,8 @@ function start() {
 
 function success(user: User) {
   set.setUser(user);
+  // 로그인 성공 시 자동 모달 오픈 방지
+  modalSet.setShouldAutoOpen(false);
 }
 
 function fail(e: unknown) {
@@ -44,6 +48,12 @@ export async function signInOrSignUpEmail(email: string, password: string) {
     // 1) 먼저 회원가입 시도
     const { user } = await createUserWithEmailAndPassword(auth, email, password);
     success(user);
+    await ensureUserDocument(user);
+
+    // 로그인 성공 시 새로고침 (즉시 새로고침으로 이중 로딩 방지)
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
     return user;
   } catch (err) {
     const e = err as AuthError;
@@ -55,6 +65,10 @@ export async function signInOrSignUpEmail(email: string, password: string) {
         success(user);
         await ensureUserDocument(user);
 
+        // 로그인 성공 시 새로고침 (즉시 새로고침으로 이중 로딩 방지)
+        if (typeof window !== 'undefined') {
+          window.location.reload();
+        }
         return user;
       } catch (innerErr) {
         const ie = innerErr as AuthError;
@@ -90,6 +104,10 @@ export async function signInWithGoogle() {
     success(user);
     await ensureUserDocument(user);
 
+    // 로그인 성공 시 새로고침 (즉시 새로고침으로 이중 로딩 방지)
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
     return user;
   } catch (e) {
     fail(e);
@@ -102,6 +120,11 @@ export async function signOutUser() {
   try {
     await signOut(auth);
     set.setUser(null);
+
+    // 로그아웃 성공 시 새로고침 (즉시 새로고침으로 이중 로딩 방지)
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
   } catch (e) {
     set.setError((e as Error).message);
     throw e;
