@@ -5,6 +5,7 @@ import {
   DocumentReference,
   getDoc,
   getDocs,
+  increment,
   Query,
   query,
   QueryDocumentSnapshot,
@@ -173,6 +174,26 @@ export async function fetchKeywordSuggestions(prefix: string, limit = 5): Promis
     console.error('fetchKeywordSuggestions: error:', error);
     return [];
   }
+}
+
+/**
+ * 여행지의 좋아요 수를 1 증가시킵니다.
+ */
+export async function incrementPlaceLikes(placeId: string): Promise<void> {
+  const placeRef = doc(db, 'places', placeId);
+  await updateDoc(placeRef, {
+    'stats.likes': increment(1),
+  });
+}
+
+/**
+ * 여행지의 좋아요 수를 1 감소시킵니다.
+ */
+export async function decrementPlaceLikes(placeId: string): Promise<void> {
+  const placeRef = doc(db, 'places', placeId);
+  await updateDoc(placeRef, {
+    'stats.likes': increment(-1),
+  });
 }
 
 

@@ -1,10 +1,9 @@
 // src/app/(public)/places/[id]/page.tsx
 import { getPlaceById } from '@/services/places';
-import PlaceDetailHero from '@/components/place/PlaceDetailHero';
-import KeywordBadgeList from '@/components/place/KeywordBadgeList';
-import StatsInfo from '@/components/place/StatsInfo';
-import BasicInfoTable from '@/components/place/BasicInfoTable';
-import { LikeButton } from '@/components/common/LikeButton'; // 여기만 변경
+import ImageGallery from '@/components/place/ImageGallery';
+import PlaceOverview from '@/components/place/PlaceOverview';
+import KeywordExplorer from '@/components/place/KeywordExplorer';
+import { LikeButton } from '@/components/common/LikeButton';
 import { ReviewList } from '@/components/place/ReviewList';
 
 export default async function PlacePage({ params }: { params: Promise<{ id: string }> }) {
@@ -13,29 +12,32 @@ export default async function PlacePage({ params }: { params: Promise<{ id: stri
   if (!place) return <p>존재하지 않는 여행지입니다.</p>;
 
   return (
-    <main className="mx-auto max-w-4xl space-y-8 p-4">
+    <main className="mx-auto max-w-6xl space-y-8 p-4">
+      {/* 이미지 갤러리 */}
       <div className="relative">
-        <PlaceDetailHero
-          name={place.name}
-          imageUrls={place.imageUrls}
-          regionType={place.regionType}
-          location={place.location}
-          seasonTags={place.seasonTags}
-          budgetLevel={place.budgetLevel}
+        <ImageGallery
+          images={place.imageUrls}
+          placeName={place.name}
         />
-        <LikeButton placeId={place.id} className="right-4 top-4" />
+        <LikeButton placeId={place.id} className="absolute top-4 right-4 z-20" />
       </div>
 
-      <KeywordBadgeList keywords={place.keywords} />
-
-      <StatsInfo likes={place.stats.likes} reviewCount={place.stats.reviewCount} />
-
-      <BasicInfoTable
+      {/* 여행지 개요 */}
+      <PlaceOverview
+        placeId={place.id}
+        name={place.name}
         description={place.description}
+        regionType={place.regionType}
         location={place.location}
-        createdBy={place.createdBy}
-        createdAt={place.createdAt} // Firestore Timestamp → Date
+        seasonTags={place.seasonTags}
+        budgetLevel={place.budgetLevel}
+        stats={place.stats}
       />
+
+      {/* 키워드 탐색 */}
+      <KeywordExplorer keywords={place.keywords} />
+
+      {/* 리뷰 섹션 */}
       <ReviewList placeId={place.id} />
     </main>
   );

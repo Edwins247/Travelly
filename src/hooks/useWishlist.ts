@@ -7,6 +7,7 @@ import {
   removeFromWishlist,
   subscribeWishlist,
 } from '@/services/users';
+import { incrementPlaceLikes, decrementPlaceLikes } from '@/services/places';
 
 export function useWishlist() {
   const user = useAuthStore((s) => s.user);
@@ -31,8 +32,24 @@ export function useWishlist() {
   const toggle = useCallback(
     async (placeId: string, next: boolean) => {
       if (!user) return;
-      if (next) await addToWishlist(user.uid, placeId);
-      else await removeFromWishlist(user.uid, placeId);
+
+      try {
+        if (next) {
+          // 위시리스트에 추가 + 좋아요 수 증가
+          await Promise.all([
+            addToWishlist(user.uid, placeId),
+            incrementPlaceLikes(placeId)
+          ]);
+        } else {
+          // 위시리스트에서 제거 + 좋아요 수 감소
+          await Promise.all([
+            removeFromWishlist(user.uid, placeId),
+            decrementPlaceLikes(placeId)
+          ]);
+        }
+      } catch (error) {
+        console.error('Error toggling wishlist:', error);
+      }
     },
     [user]
   );
