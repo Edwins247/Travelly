@@ -44,10 +44,9 @@ export function ReviewForm({ placeId }: ReviewFormProps) {
     if (!user) return alert('로그인 후 작성해주세요');
 
     // 커스텀 태그 추가
-    let finalTags = [...data.tags];
-    if (data.customTag.trim()) {
-      finalTags.push(data.customTag.trim());
-    }
+    const finalTags = data.customTag.trim()
+      ? [...data.tags, data.customTag.trim()]
+      : [...data.tags];
 
     await addReview({
       placeId,
