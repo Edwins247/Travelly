@@ -6,6 +6,7 @@ import { SearchBar } from '@/components/home/SearchBar';
 import { KeywordChips } from '@/components/home/KeywordChips';
 import { CategoryGrid } from '@/components/home/CategoryGrid';
 import { PlaceGrid } from '@/components/common/PlaceGrid';
+import { PageLoader } from '@/components/common/PageLoader';
 import { getPlaces } from '@/services/places';
 import type { PlaceCardData } from '@/types/place';
 
@@ -38,6 +39,11 @@ export default function Home() {
       });
   }, []);
 
+  // 전체 페이지 로딩 중일 때는 전체 로더 표시
+  if (loading) {
+    return <PageLoader showHeader={false} showFooter={false} />;
+  }
+
   return (
     <main className="flex flex-col items-center gap-6 py-16">
       <div className="w-full max-w-6xl space-y-6 px-4">
@@ -45,15 +51,8 @@ export default function Home() {
         <KeywordChips keywords={hotKeywords} />
         <CategoryGrid />
 
-        {/* 3) 로딩 중 스켈레톤 */}
-        {loading ? (
-          <PlaceGrid title="추천 여행지" isLoading />
-        ) : (
-          <>
-            {/* Firestore에 하나만 들어있어도 slice 없이 렌더됨 */}
-            <PlaceGrid title="추천 여행지" places={places} />
-          </>
-        )}
+        {/* 여행지 목록 */}
+        <PlaceGrid title="추천 여행지" places={places} />
       </div>
     </main>
   );

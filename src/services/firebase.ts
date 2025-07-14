@@ -20,5 +20,7 @@ export const auth = getAuth(firebaseApp);
 export const db   = getFirestore(firebaseApp);
 export const storage = getStorage(firebaseApp);
 
-export const analytics =
-  typeof window !== 'undefined' ? await (isSupported().then(ok => ok ? getAnalytics(firebaseApp) : null)) : null;
+// Analytics는 클라이언트 사이드에서만 초기화
+export const analytics = typeof window !== 'undefined'
+  ? isSupported().then(ok => ok ? getAnalytics(firebaseApp) : null)
+  : null;

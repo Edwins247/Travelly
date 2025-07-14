@@ -25,7 +25,7 @@ interface FormValues {
 }
 
 export function LoginModal() {
-  const { open, closeModal } = useLoginModal();
+  const { open, closeModal, openModal } = useLoginModal();
   const { loading, error }   = useAuthStore();
 
   const {
@@ -39,10 +39,13 @@ export function LoginModal() {
   const onSubmit = handleSubmit(async ({ email, password }) => {
       console.log('▶ form values:', { email, password });
     try {
+      closeModal(); // 로그인 시도 시 모달 먼저 닫기
       await signInOrSignUpEmail(email, password);
-      closeModal();
+      // signInOrSignUpEmail()에서 새로고침이 일어남
     } catch {
       // error는 useAuthStore.error로 표시됩니다
+      // 에러 발생 시 모달 다시 열기
+      setTimeout(() => openModal(), 100);
     }
   });
 
@@ -105,12 +108,21 @@ export function LoginModal() {
             variant="outline"
             className="w-full"
             onClick={async () => {
-              await signInWithGoogle();
-              closeModal();
+              try {
+                closeModal(); // Google 로그인 시도 시 모달 먼저 닫기
+                await signInWithGoogle();
+                // signInWithGoogle()에서 새로고침이 일어남
+              } catch (error) {
+                // 에러 발생 시에만 여기 도달 (팝업 취소 등)
+                console.log('Google 로그인 취소 또는 실패');
+                console.log(error);
+                // 에러 발생 시 모달 다시 열기
+                setTimeout(() => openModal(), 100);
+              }
             }}
             disabled={loading}
           >
-            Google 계정으로 계속
+            {loading ? '로그인 중...' : 'Google 계정으로 계속'}
           </Button>
         </DialogFooter>
       </DialogContent>
