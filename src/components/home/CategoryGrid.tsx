@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { CategoryCard } from './CategoryCard';
 
+// ToDo: 새로운 데이터로 리뉴얼 한 뒤, 필요로한 실제 카테고리로 고정해서 처리하기
 const items = [
   { label: '국내', icon: <Landmark className="h-8 w-8" />, href: '/search?region=domestic' },
   { label: '해외', icon: <Globe className="h-8 w-8" />,   href: '/search?region=abroad'   },

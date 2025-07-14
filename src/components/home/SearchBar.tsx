@@ -20,12 +20,19 @@ export function SearchBar() {
   useEffect(() => {
     let active = true;
     const term = debouncedInput.trim();
+
     if (term) {
       fetchKeywordSuggestions(term).then((list) => {
-        if (active) setSuggestions(list);
+        if (active) {
+          setSuggestions(list);
+          setShowList(list.length > 0); // 제안이 있을 때만 리스트 표시
+        }
+      }).catch((error) => {
+        console.error('SearchBar: error fetching suggestions:', error);
       });
     } else {
       setSuggestions([]);
+      setShowList(false);
     }
     return () => {
       active = false;

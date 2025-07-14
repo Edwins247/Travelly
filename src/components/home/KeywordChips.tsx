@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';      
 import { cn } from '@/lib/utils';
 
+// ToDo: 실제 키워드 바탕으로 업데이트하기
 interface KeywordChipsProps {
   /** 추천 키워드 목록 (해시태그 없이 텍스트만) */
   keywords: string[];

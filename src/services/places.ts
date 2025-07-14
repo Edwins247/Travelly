@@ -139,15 +139,43 @@ export async function getWishlistPlaces(ids: string[]): Promise<PlaceCardData[]>
 }
 
 /**
- * 키워드 컬렉션에서 입력값으로 시작하는 키워드를 최대 limit개 가져옵니다.
+ * places 컬렉션의 keywords 필드에서 입력값으로 시작하는 키워드를 최대 limit개 가져옵니다.
+ * ToDo: 이렇게 컬렉션에서 keywords를 추출하는 방식 vs keywords를 아예 따로 새로운 컬렉션으로 만들어서 검색하게 하기
  */
 export async function fetchKeywordSuggestions(prefix: string, limit = 5): Promise<string[]> {
   if (!prefix) return [];
-  const col = collection(db, 'keywords');
-  const q = query(col, where('keyword', '>=', prefix), where('keyword', '<=', prefix + '\uf8ff'));
-  const snap = await getDocs(q);
-  return snap.docs.slice(0, limit).map((d) => d.data().keyword);
+
+  try {
+    const col = collection(db, 'places');
+    const snap = await getDocs(col);
+
+    // 모든 places의 keywords를 수집
+    const allKeywords = new Set<string>();
+
+    snap.docs.forEach(doc => {
+      const data = doc.data();
+      if (data.keywords && Array.isArray(data.keywords)) {
+        data.keywords.forEach((keyword: string) => {
+          if (keyword.toLowerCase().includes(prefix.toLowerCase())) {
+            allKeywords.add(keyword);
+          }
+        });
+      }
+    });
+
+    // Set을 배열로 변환하고 정렬 후 limit 적용
+    const results = Array.from(allKeywords)
+      .sort()
+      .slice(0, limit);
+
+    return results;
+  } catch (error) {
+    console.error('fetchKeywordSuggestions: error:', error);
+    return [];
+  }
 }
+
+
 
 export async function getPlaceById(id: string): Promise<PlaceDTO | null> {
   const ref = doc(db, 'places', id) as DocumentReference<Omit<Place, 'id'>>;
