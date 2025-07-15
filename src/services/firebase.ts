@@ -14,10 +14,11 @@ const firebaseConfig = {
   measurementId:        process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID, // optional
 };
 
-export const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+// Firebase 앱 초기화 (중복 방지)
+export const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(firebaseApp);
-export const db   = getFirestore(firebaseApp);
+export const db = getFirestore(firebaseApp);
 export const storage = getStorage(firebaseApp);
 
 // Analytics는 클라이언트 사이드에서만 초기화
