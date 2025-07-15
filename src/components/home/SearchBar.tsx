@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Search as SearchIcon } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { fetchKeywordSuggestions } from '@/services/places';
+import { performanceTracking, stopTrace } from '@/utils/performance';
 
 export function SearchBar() {
   const router = useRouter();
@@ -24,11 +25,16 @@ export function SearchBar() {
 
     if (term) {
       setIsLoadingSuggestions(true);
+
+      // 검색 제안 성능 추적 시작
+      const suggestionTrace = performanceTracking.trackSearch('suggestions');
+
       fetchKeywordSuggestions(term).then((list) => {
         if (active) {
           setSuggestions(list);
           setShowList(list.length > 0); // 제안이 있을 때만 리스트 표시
           setIsLoadingSuggestions(false);
+          stopTrace(suggestionTrace); // 성공 시 추적 종료
         }
       }).catch((error) => {
         console.error('SearchBar: error fetching suggestions:', error);
@@ -36,6 +42,7 @@ export function SearchBar() {
           setSuggestions([]);
           setShowList(false);
           setIsLoadingSuggestions(false);
+          stopTrace(suggestionTrace); // 에러 시 추적 종료
         }
       });
     } else {
@@ -52,8 +59,12 @@ export function SearchBar() {
     e.preventDefault();
     const term = input.trim();
     if (!term) return;
+
+    // 검색 실행 성능 추적
+    const searchTrace = performanceTracking.trackSearch('execution');
     router.push(`/search?keyword=${encodeURIComponent(term)}`);
     setShowList(false);
+    // 페이지 이동이므로 추적은 자동으로 종료됨
   };
 
   return (

@@ -9,15 +9,20 @@ import { NetworkAware } from '@/components/common/NetworkStatus';
 import { Button } from '@/components/ui/button';
 import { Home, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
+import { performanceTracking, stopTrace } from '@/utils/performance';
 
 export default async function PlacePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  // 페이지 로딩 성능 추적 시작
+  const pageTrace = performanceTracking.trackPageLoad('place-detail');
 
   let place;
   try {
     place = await getPlaceById(id);
   } catch (error) {
     console.error('Error fetching place:', error);
+    stopTrace(pageTrace); // 에러 시 추적 종료
     return (
       <main className="mx-auto max-w-6xl p-4">
         <div className="flex flex-col items-center justify-center py-20 space-y-6 text-center">
@@ -48,6 +53,7 @@ export default async function PlacePage({ params }: { params: Promise<{ id: stri
   }
 
   if (!place) {
+    stopTrace(pageTrace); // 404 시 추적 종료
     return (
       <main className="mx-auto max-w-6xl p-4">
         <div className="flex flex-col items-center justify-center py-20 space-y-6 text-center">
@@ -68,6 +74,9 @@ export default async function PlacePage({ params }: { params: Promise<{ id: stri
       </main>
     );
   }
+
+  // 성공적으로 페이지 로드 완료
+  stopTrace(pageTrace);
 
   return (
     <NetworkAware>

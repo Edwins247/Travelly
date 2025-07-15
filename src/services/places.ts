@@ -18,6 +18,7 @@ import { db, storage } from '@/services/firebase';
 import { GetPlacesOptions, Place, PlaceCardData, PlaceInput } from '@/types/place';
 import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
 import { toast } from '@/store/toastStore';
+import { performanceTracking, stopTrace } from '@/utils/performance';
 
 // Firebase 에러 타입 정의
 interface FirebaseError {
@@ -102,6 +103,9 @@ export async function getPlaces({
   season,
   budget,
 }: GetPlacesOptions): Promise<PlaceCardData[]> {
+  // 성능 추적 시작
+  const trace = performanceTracking.trackFirestoreQuery('getPlaces');
+
   try {
     // Base ref with Place type
     const col = collection(db, 'places') as CollectionReference<Place>;
@@ -131,7 +135,7 @@ export async function getPlaces({
 
     // Execute and map
     const snap = await getDocs(q);
-    return snap.docs.map((doc: QueryDocumentSnapshot<Place>) => {
+    const result = snap.docs.map((doc: QueryDocumentSnapshot<Place>) => {
       const data = doc.data();
       return {
         id: doc.id,
@@ -143,10 +147,17 @@ export async function getPlaces({
             : '/placeholder.jpg',
       };
     });
+
+    // 성능 추적 종료
+    stopTrace(trace);
+    return result;
   } catch (error) {
     console.error('Error fetching places:', error);
     const message = getErrorMessage(error, '잠시 후 다시 시도해주세요.');
     toast.error('여행지 목록 로딩 실패', message);
+
+    // 에러 시에도 추적 종료
+    stopTrace(trace);
     return []; // 빈 배열 반환으로 UI가 깨지지 않도록 함
   }
 }
@@ -281,6 +292,9 @@ export function uploadPlaceImage(file: File, placeId: string): Promise<string> {
   const storageRef = ref(storage, path);
   const task = uploadBytesResumable(storageRef, file);
 
+  // 성능 추적 시작
+  const trace = performanceTracking.trackImageUpload();
+
   return new Promise((resolve, reject) => {
     task.on(
       'state_changed',
@@ -288,15 +302,18 @@ export function uploadPlaceImage(file: File, placeId: string): Promise<string> {
       (error) => {
         console.error('Error uploading image:', error);
         toast.error('이미지 업로드 실패', '파일 크기나 형식을 확인하고 다시 시도해주세요.');
+        stopTrace(trace); // 에러 시 추적 종료
         reject(error);
       },
       async () => {
         try {
           const url = await getDownloadURL(storageRef);
+          stopTrace(trace); // 성공 시 추적 종료
           resolve(url);
         } catch (e) {
           console.error('Error getting download URL:', e);
           toast.error('이미지 URL 생성 실패', '다시 시도해주세요.');
+          stopTrace(trace); // 에러 시 추적 종료
           reject(e);
         }
       }

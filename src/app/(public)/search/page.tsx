@@ -8,6 +8,7 @@ import { Pagination } from '@/components/common/Pagination';
 import { PageLoader } from '@/components/common/PageLoader';
 import { NetworkAware } from '@/components/common/NetworkStatus';
 import { getPlaces } from '@/services/places';
+import { performanceTracking, stopTrace } from '@/utils/performance';
 import type { PlaceCardData, GetPlacesOptions } from '@/types/place';
 
 function SearchContent() {
@@ -49,6 +50,10 @@ function SearchContent() {
     const fetchPlaces = async () => {
       setLoading(true);
       setError(null);
+
+      // 검색 페이지 로딩 성능 추적
+      const searchPageTrace = performanceTracking.trackPageLoad('search-results');
+
       const options: GetPlacesOptions = {
         keyword: rawKeyword,
         region:  rawRegion || undefined,
@@ -58,9 +63,11 @@ function SearchContent() {
       try {
         const data = await getPlaces(options);
         setPlaces(data);
+        stopTrace(searchPageTrace); // 성공 시 추적 종료
       } catch (e) {
         console.error('Search places error:', e);
         setError('검색 결과를 불러오는데 실패했습니다.');
+        stopTrace(searchPageTrace); // 에러 시 추적 종료
       } finally {
         setLoading(false);
       }

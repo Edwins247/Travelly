@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { addPlace, updatePlace, uploadPlaceImage } from '@/services/places';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/store/toastStore';
+import { startTrace, stopTrace } from '@/utils/performance';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -169,6 +170,9 @@ export function ContributeForm() {
     setIsUploading(true);
     setUploadProgress(0);
 
+    // 여행지 제안 성능 추적 시작
+    const contributeTrace = startTrace('place_contribution');
+
     try {
       // 1) 빈 문서 생성
       const placeId = await addPlace();
@@ -210,6 +214,9 @@ export function ContributeForm() {
       setUploadProgress(100);
       toast.success('등록 완료', '여행지 제안이 성공적으로 등록되었습니다! 🎉');
 
+      // 성공 시 추적 종료
+      stopTrace(contributeTrace);
+
       // 폼 초기화
       setSelectedImages([]);
       setImagePreviewUrls([]);
@@ -225,6 +232,9 @@ export function ContributeForm() {
     } catch (e) {
       console.error('Form submission error:', e);
       toast.error('등록 실패', '여행지 제안 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
+
+      // 에러 시 추적 종료
+      stopTrace(contributeTrace);
     } finally {
       setIsUploading(false);
       setUploadProgress(0);

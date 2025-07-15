@@ -9,6 +9,7 @@ import { PlaceGrid } from '@/components/common/PlaceGrid';
 import { PageLoader } from '@/components/common/PageLoader';
 import { NetworkAware } from '@/components/common/NetworkStatus';
 import { getPlaces } from '@/services/places';
+import { performanceTracking, stopTrace } from '@/utils/performance';
 import type { PlaceCardData } from '@/types/place';
 
 
@@ -31,12 +32,18 @@ export default function Home() {
   const fetchPlaces = async () => {
     setLoading(true);
     setError(null);
+
+    // 메인 페이지 로딩 성능 추적
+    const homePageTrace = performanceTracking.trackPageLoad('home');
+
     try {
       const data = await getPlaces({});
       setPlaces(data);
+      stopTrace(homePageTrace); // 성공 시 추적 종료
     } catch (e) {
       console.error('getPlaces 오류:', e);
       setError('여행지 목록을 불러오는데 실패했습니다.');
+      stopTrace(homePageTrace); // 에러 시 추적 종료
     } finally {
       setLoading(false);
     }
