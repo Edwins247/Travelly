@@ -1,60 +1,27 @@
 // src/components/search/SearchBar.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search as SearchIcon } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
-import { fetchKeywordSuggestions } from '@/services/places';
-import { performanceTracking, stopTrace } from '@/utils/performance';
+import { useKeywordSuggestions } from '@/hooks/usePlaces';
+import { performanceTracking } from '@/utils/performance';
 import { searchAnalytics } from '@/utils/analytics';
 
 export function SearchBar() {
   const router = useRouter();
   const [input, setInput] = useState('');
   const debouncedInput = useDebounce(input, 300);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showList, setShowList] = useState(false);
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
-  // debouncedInput 변경 시 제안 키워드 조회
-  useEffect(() => {
-    let active = true;
-    const term = debouncedInput.trim();
-
-    if (term) {
-      setIsLoadingSuggestions(true);
-
-      // 검색 제안 성능 추적 시작
-      const suggestionTrace = performanceTracking.trackSearch('suggestions');
-
-      fetchKeywordSuggestions(term).then((list) => {
-        if (active) {
-          setSuggestions(list);
-          setShowList(list.length > 0); // 제안이 있을 때만 리스트 표시
-          setIsLoadingSuggestions(false);
-          stopTrace(suggestionTrace); // 성공 시 추적 종료
-        }
-      }).catch((error) => {
-        console.error('SearchBar: error fetching suggestions:', error);
-        if (active) {
-          setSuggestions([]);
-          setShowList(false);
-          setIsLoadingSuggestions(false);
-          stopTrace(suggestionTrace); // 에러 시 추적 종료
-        }
-      });
-    } else {
-      setSuggestions([]);
-      setShowList(false);
-      setIsLoadingSuggestions(false);
-    }
-    return () => {
-      active = false;
-    };
-  }, [debouncedInput]);
+  // React Query로 키워드 제안 가져오기
+  const {
+    data: suggestions = [],
+    isLoading: isLoadingSuggestions
+  } = useKeywordSuggestions(debouncedInput.trim(), 5);
 
   const onSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();

@@ -1,17 +1,16 @@
 // src/app/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { SearchBar } from '@/components/home/SearchBar';
 import { KeywordChips } from '@/components/home/KeywordChips';
 import { CategoryGrid } from '@/components/home/CategoryGrid';
 import { PlaceGrid } from '@/components/common/PlaceGrid';
 import { PageLoader } from '@/components/common/PageLoader';
 import { NetworkAware } from '@/components/common/NetworkStatus';
-import { getPlaces } from '@/services/places';
 import { performanceTracking, stopTrace } from '@/utils/performance';
 import { usePageTracking } from '@/hooks/usePageTracking';
-import type { PlaceCardData } from '@/types/place';
+import { usePlaces } from '@/hooks/usePlaces';
 
 
 export default function Home() {
@@ -27,35 +26,25 @@ export default function Home() {
   // 페이지 추적
   usePageTracking('home', { page_type: 'landing' });
 
-  // 1) State 선언
-  const [places, setPlaces] = useState<PlaceCardData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // React Query로 장소 목록 가져오기
+  const {
+    data: places = [],
+    isLoading: loading,
+    error: queryError,
+    refetch: fetchPlaces
+  } = usePlaces({});
 
-  // 2) Firestore에서 가져오기
-  const fetchPlaces = async () => {
-    setLoading(true);
-    setError(null);
+  // 에러 메시지 변환
+  const error = queryError ? '여행지 목록을 불러오는데 실패했습니다.' : undefined;
 
-    // 메인 페이지 로딩 성능 추적
-    const homePageTrace = performanceTracking.trackPageLoad('home');
-
-    try {
-      const data = await getPlaces({});
-      setPlaces(data);
-      stopTrace(homePageTrace); // 성공 시 추적 종료
-    } catch (e) {
-      console.error('getPlaces 오류:', e);
-      setError('여행지 목록을 불러오는데 실패했습니다.');
-      stopTrace(homePageTrace); // 에러 시 추적 종료
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // 성능 추적을 위한 useEffect
   useEffect(() => {
-    fetchPlaces();
-  }, []);
+    if (!loading) {
+      // 메인 페이지 로딩 성능 추적
+      const homePageTrace = performanceTracking.trackPageLoad('home');
+      stopTrace(homePageTrace);
+    }
+  }, [loading]);
 
   // 전체 페이지 로딩 중일 때는 전체 로더 표시
   if (loading) {
