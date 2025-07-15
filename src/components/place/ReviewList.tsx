@@ -10,10 +10,37 @@ import { MessageSquare, Tag, TrendingUp } from 'lucide-react';
 
 export function ReviewList({ placeId }: { placeId: string }) {
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getReviewsByPlace(placeId).then(setReviews);
+    const fetchReviews = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await getReviewsByPlace(placeId);
+        setReviews(data);
+      } catch (e) {
+        console.error('Error fetching reviews:', e);
+        setError('후기를 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReviews();
   }, [placeId]);
+
+  // 재시도용 함수
+  const retryFetchReviews = () => {
+    setLoading(true);
+    setError(null);
+
+    getReviewsByPlace(placeId)
+      .then(setReviews)
+      .catch(() => setError('후기를 불러오는데 실패했습니다.'))
+      .finally(() => setLoading(false));
+  };
 
   // 모든 리뷰의 태그를 수집하고 빈도수 계산
   const getPopularTags = () => {
@@ -77,7 +104,27 @@ export function ReviewList({ placeId }: { placeId: string }) {
 
       {/* 후기 목록 */}
       <div className="space-y-4">
-        {reviews.length === 0 ? (
+        {loading ? (
+          <Card>
+            <CardContent className="py-8 text-center text-muted-foreground">
+              <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+              <p>후기를 불러오는 중...</p>
+            </CardContent>
+          </Card>
+        ) : error ? (
+          <Card>
+            <CardContent className="py-8 text-center text-muted-foreground">
+              <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="mb-2">{error}</p>
+              <button
+                onClick={retryFetchReviews}
+                className="text-sm text-primary hover:underline"
+              >
+                다시 시도
+              </button>
+            </CardContent>
+          </Card>
+        ) : reviews.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-muted-foreground">
               <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />

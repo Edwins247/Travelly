@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Expand, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Expand, X, ImageIcon, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
@@ -15,6 +15,7 @@ interface ImageGalleryProps {
 export default function ImageGallery({ images, placeName }: ImageGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
 
   const nextImage = () => {
     setCurrentIndex((prev) => (prev + 1) % images.length);
@@ -22,6 +23,10 @@ export default function ImageGallery({ images, placeName }: ImageGalleryProps) {
 
   const prevImage = () => {
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  const handleImageError = (index: number) => {
+    setImageErrors(prev => new Set(prev).add(index));
   };
 
   if (images.length === 0) {
@@ -35,14 +40,22 @@ export default function ImageGallery({ images, placeName }: ImageGalleryProps) {
   return (
     <div className="space-y-4">
       {/* 메인 이미지 */}
-      <div className="relative h-96 rounded-xl overflow-hidden group">
-        <Image
-          src={images[currentIndex]}
-          alt={`${placeName} - ${currentIndex + 1}`}
-          fill
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
-          unoptimized
-        />
+      <div className="relative h-96 rounded-xl overflow-hidden group bg-muted">
+        {imageErrors.has(currentIndex) ? (
+          <div className="flex h-full w-full items-center justify-center flex-col gap-2 text-muted-foreground">
+            <AlertTriangle className="h-12 w-12" />
+            <p className="text-sm">이미지를 불러올 수 없습니다</p>
+          </div>
+        ) : (
+          <Image
+            src={images[currentIndex]}
+            alt={`${placeName} - ${currentIndex + 1}`}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            onError={() => handleImageError(currentIndex)}
+            unoptimized
+          />
+        )}
         
         {/* 이미지 네비게이션 */}
         {images.length > 1 && (
@@ -103,13 +116,20 @@ export default function ImageGallery({ images, placeName }: ImageGalleryProps) {
               }`}
               onClick={() => setCurrentIndex(index)}
             >
-              <Image
-                src={image}
-                alt={`${placeName} 썸네일 ${index + 1}`}
-                fill
-                className="object-cover"
-                unoptimized
-              />
+              {imageErrors.has(index) ? (
+                <div className="flex h-full w-full items-center justify-center bg-muted">
+                  <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                </div>
+              ) : (
+                <Image
+                  src={image}
+                  alt={`${placeName} 썸네일 ${index + 1}`}
+                  fill
+                  className="object-cover"
+                  onError={() => handleImageError(index)}
+                  unoptimized
+                />
+              )}
               {index === 3 && images.length > 4 && (
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                   <span className="text-white text-sm font-medium">
