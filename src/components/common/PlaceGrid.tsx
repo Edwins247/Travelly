@@ -12,6 +12,7 @@ interface PlaceGridProps {
   isLoading?: boolean;        // 로딩 플래그
   error?: string;             // 에러 메시지
   onRetry?: () => void;       // 재시도 함수
+  searchKeyword?: string;     // 검색 키워드 (Analytics용)
 }
 
 export function PlaceGrid({
@@ -19,7 +20,8 @@ export function PlaceGrid({
   places = [],
   isLoading = false,
   error,
-  onRetry
+  onRetry,
+  searchKeyword
 }: PlaceGridProps) {
   const router = useRouter();
 
@@ -51,10 +53,12 @@ export function PlaceGrid({
                   <p className="text-sm">다른 검색 조건을 시도해보세요.</p>
                 </div>
               ) : (
-                places.map((p) => (
+                places.map((p, index) => (
                   <PlaceCard
                     key={p.id}
                     {...p}
+                    searchKeyword={searchKeyword}
+                    position={index}
                   />
                 ))
               )}

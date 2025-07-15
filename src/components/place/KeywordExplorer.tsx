@@ -4,21 +4,35 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Search, Tag, TrendingUp } from 'lucide-react';
+import { engagementAnalytics } from '@/utils/analytics';
 import { useRouter } from 'next/navigation';
 
 interface KeywordExplorerProps {
   keywords: string[];
+  placeName?: string; // Analytics용
+  placeId?: string; // Analytics용
 }
 
-export default function KeywordExplorer({ keywords }: KeywordExplorerProps) {
+export default function KeywordExplorer({ keywords, placeName, placeId }: KeywordExplorerProps) {
   const router = useRouter();
 
   const handleKeywordClick = (keyword: string) => {
+    // Analytics: 키워드 탐색 클릭
+    if (placeId && placeName) {
+      engagementAnalytics.keywordExploration(keyword, placeId, placeName);
+    }
+
     router.push(`/search?keyword=${encodeURIComponent(keyword)}`);
   };
 
   const handleExploreAll = () => {
     const allKeywords = keywords.join(' ');
+
+    // Analytics: 전체 키워드 탐색
+    if (placeId && placeName) {
+      engagementAnalytics.keywordExploration('all_keywords', placeId, placeName);
+    }
+
     router.push(`/search?keyword=${encodeURIComponent(allKeywords)}`);
   };
 

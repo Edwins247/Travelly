@@ -8,6 +8,9 @@ import { Pagination } from '@/components/common/Pagination';
 import { PageLoader } from '@/components/common/PageLoader';
 import { NetworkAware } from '@/components/common/NetworkStatus';
 import { getPlaces } from '@/services/places';
+import { performanceTracking, stopTrace } from '@/utils/performance';
+import { searchAnalytics } from '@/utils/analytics';
+import { usePageTracking } from '@/hooks/usePageTracking';
 import type { PlaceCardData, GetPlacesOptions } from '@/types/place';
 
 function SearchContent() {
@@ -22,6 +25,14 @@ function SearchContent() {
   const rawPage    = Number(params.get('page') ?? '1');
 
   const PER_PAGE   = 12;
+
+  // 페이지 추적 (검색 컨텍스트 포함)
+  usePageTracking('search', {
+    search_keyword: rawKeyword,
+    search_region: rawRegion || '',
+    search_season: rawSeason || '',
+    search_budget: rawBudget || '',
+  });
 
   // 2) State
   const [places, setPlaces]   = useState<PlaceCardData[]>([]);
@@ -44,11 +55,15 @@ function SearchContent() {
     setPage(1);
   }, [rawKeyword, rawRegion, rawSeason, rawBudget]);
 
-  // 5) Fetch from Firestore on any filter change
+  // 5) Fetch from Firebase on any filter change
   useEffect(() => {
     const fetchPlaces = async () => {
       setLoading(true);
       setError(null);
+
+      // 검색 페이지 로딩 성능 추적
+      const searchPageTrace = performanceTracking.trackPageLoad('search-results');
+
       const options: GetPlacesOptions = {
         keyword: rawKeyword,
         region:  rawRegion || undefined,
@@ -58,9 +73,22 @@ function SearchContent() {
       try {
         const data = await getPlaces(options);
         setPlaces(data);
+
+        // Analytics: 검색 결과 수 추적
+        if (rawKeyword) {
+          const filters = {
+            region: rawRegion,
+            season: rawSeason,
+            budget: rawBudget,
+          };
+          searchAnalytics.searchQuery(rawKeyword, data.length, filters);
+        }
+
+        stopTrace(searchPageTrace); // 성공 시 추적 종료
       } catch (e) {
         console.error('Search places error:', e);
         setError('검색 결과를 불러오는데 실패했습니다.');
+        stopTrace(searchPageTrace); // 에러 시 추적 종료
       } finally {
         setLoading(false);
       }
@@ -112,6 +140,7 @@ function SearchContent() {
           isLoading={loading}
           error={error || undefined}
           onRetry={retryFetch}
+          searchKeyword={rawKeyword}
         />
 
         <Pagination

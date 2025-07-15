@@ -4,6 +4,8 @@ import { useForm } from 'react-hook-form';
 import { addReview } from '@/services/reviews';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/store/toastStore';
+import { startTrace, stopTrace } from '@/utils/performance';
+import { engagementAnalytics } from '@/utils/analytics';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -54,6 +56,9 @@ export function ReviewForm({ placeId }: ReviewFormProps) {
 
     setSubmitError(null);
 
+    // 리뷰 작성 성능 추적 시작
+    const reviewTrace = startTrace('review_submission');
+
     try {
       // 커스텀 태그 추가
       const finalTags = data.customTag.trim()
@@ -73,6 +78,17 @@ export function ReviewForm({ placeId }: ReviewFormProps) {
       setValue('customTag', '');
       setIsExpanded(false);
 
+      // Analytics: 리뷰 작성 완료
+      engagementAnalytics.completeReview(
+        placeId,
+        'Unknown Place', // place name은 상위에서 전달받아야 함
+        finalTags.length,
+        data.content.trim().length
+      );
+
+      // 성공 시 추적 종료
+      stopTrace(reviewTrace);
+
       // 새로고침으로 리뷰 목록 업데이트
       setTimeout(() => {
         window.location.reload();
@@ -82,6 +98,9 @@ export function ReviewForm({ placeId }: ReviewFormProps) {
       console.error('Review submission error:', error);
       setSubmitError('후기 등록에 실패했습니다. 다시 시도해주세요.');
       toast.error('후기 등록 실패', '잠시 후 다시 시도해주세요.');
+
+      // 에러 시 추적 종료
+      stopTrace(reviewTrace);
     }
   });
 
@@ -142,7 +161,11 @@ export function ReviewForm({ placeId }: ReviewFormProps) {
               placeholder="여행지에 대한 솔직한 후기를 남겨주세요..."
               rows={4}
               className="resize-none"
-              onFocus={() => setIsExpanded(true)}
+              onFocus={() => {
+                setIsExpanded(true);
+                // Analytics: 리뷰 작성 시작
+                engagementAnalytics.startReview(placeId);
+              }}
             />
             {errors.content && (
               <p className="text-sm text-destructive">{errors.content.message}</p>

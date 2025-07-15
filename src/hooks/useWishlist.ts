@@ -7,7 +7,8 @@ import {
   removeFromWishlist,
   subscribeWishlist,
 } from '@/services/users';
-import { incrementPlaceLikes, decrementPlaceLikes } from '@/services/places';
+import { incrementPlaceLikes, decrementPlaceLikes, getPlaceById } from '@/services/places';
+import { placeAnalytics } from '@/utils/analytics';
 
 export function useWishlist() {
   const user = useAuthStore((s) => s.user);
@@ -40,12 +41,27 @@ export function useWishlist() {
             addToWishlist(user.uid, placeId),
             incrementPlaceLikes(placeId)
           ]);
+
+          // Analytics: 좋아요 이벤트 (place 정보 가져와서 추적)
+          getPlaceById(placeId).then(place => {
+            if (place) {
+              placeAnalytics.likePlace(placeId, place.name, place.location.region);
+            }
+          }).catch(console.error);
+
         } else {
           // 위시리스트에서 제거 + 좋아요 수 감소
           await Promise.all([
             removeFromWishlist(user.uid, placeId),
             decrementPlaceLikes(placeId)
           ]);
+
+          // Analytics: 좋아요 취소 이벤트
+          getPlaceById(placeId).then(place => {
+            if (place) {
+              placeAnalytics.unlikePlace(placeId, place.name, place.location.region);
+            }
+          }).catch(console.error);
         }
       } catch (error) {
         console.error('Error toggling wishlist:', error);

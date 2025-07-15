@@ -2,6 +2,7 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage }  from 'firebase/storage';
+import { getPerformance } from "firebase/performance";
 import { getAnalytics, isSupported } from 'firebase/analytics';
 
 const firebaseConfig = {
@@ -24,4 +25,9 @@ export const storage = getStorage(firebaseApp);
 // Analytics는 클라이언트 사이드에서만 초기화
 export const analytics = typeof window !== 'undefined'
   ? isSupported().then(ok => ok ? getAnalytics(firebaseApp) : null)
+  : null;
+
+// Performance는 클라이언트 사이드에서만 초기화
+export const perf = typeof window !== 'undefined'
+  ? getPerformance(firebaseApp)
   : null;
