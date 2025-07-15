@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { addPlace, updatePlace, uploadPlaceImage } from '@/services/places';
 import { useAuthStore } from '@/store/authStore';
+import { toast } from '@/store/toastStore';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -66,6 +67,8 @@ export function ContributeForm() {
   const { user } = useAuthStore();
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   const {
     register,
@@ -144,34 +147,48 @@ export function ContributeForm() {
   // 폼 제출 핸들러
   const onSubmit = async (data: PlaceFormValues) => {
     if (!user) {
-      alert('로그인 후 이용해주세요.');
+      toast.error('로그인 필요', '로그인 후 이용해주세요.');
       return;
     }
 
     if (selectedImages.length === 0) {
-      alert('최소 1개의 이미지를 업로드해주세요.');
+      toast.error('이미지 필수', '최소 1개의 이미지를 업로드해주세요.');
       return;
     }
 
     if (data.seasonTags.length === 0) {
-      alert('최소 1개의 계절을 선택해주세요.');
+      toast.error('계절 선택 필수', '최소 1개의 계절을 선택해주세요.');
       return;
     }
 
     if (data.keywords.length === 0) {
-      alert('최소 1개의 키워드를 선택해주세요.');
+      toast.error('키워드 선택 필수', '최소 1개의 키워드를 선택해주세요.');
       return;
     }
 
-    // 1) 빈 문서 생성
-    const placeId = await addPlace();
+    setIsUploading(true);
+    setUploadProgress(0);
 
     try {
+      // 1) 빈 문서 생성
+      const placeId = await addPlace();
+      setUploadProgress(20);
+
       // 2) 여러 이미지 업로드
       const imageUrls: string[] = [];
-      for (const file of selectedImages) {
-        const url = await uploadPlaceImage(file, placeId);
-        imageUrls.push(url);
+      const totalImages = selectedImages.length;
+
+      for (let i = 0; i < selectedImages.length; i++) {
+        const file = selectedImages[i];
+        try {
+          const url = await uploadPlaceImage(file, placeId);
+          imageUrls.push(url);
+          setUploadProgress(20 + (60 * (i + 1)) / totalImages);
+        } catch (error) {
+          console.error(`Error uploading image ${i + 1}:`, error);
+          toast.error('이미지 업로드 실패', `${file.name} 업로드에 실패했습니다.`);
+          throw error;
+        }
       }
 
       // 3) 문서 업데이트
@@ -190,15 +207,27 @@ export function ContributeForm() {
         createdBy: user.uid,
       });
 
-      alert('여행지 제안이 등록되었습니다 🎉');
+      setUploadProgress(100);
+      toast.success('등록 완료', '여행지 제안이 성공적으로 등록되었습니다! 🎉');
 
       // 폼 초기화
       setSelectedImages([]);
       setImagePreviewUrls([]);
+      // 폼 리셋
+      setValue('name', '');
+      setValue('description', '');
+      setValue('region', '');
+      setValue('district', '');
+      setValue('keywords', []);
+      setValue('seasonTags', []);
+      setValue('customKeyword', '');
 
     } catch (e) {
-      console.error(e);
-      alert('제안 등록 중 오류가 발생했습니다.');
+      console.error('Form submission error:', e);
+      toast.error('등록 실패', '여행지 제안 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -498,8 +527,22 @@ export function ContributeForm() {
         </Card>
 
         {/* 제출 버튼 */}
-        <Button type="submit" className="w-full" disabled={isSubmitting} size="lg">
-          {isSubmitting ? '등록 중...' : '여행지 제안 등록'}
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={isSubmitting || isUploading}
+          size="lg"
+        >
+          {isUploading ? (
+            <div className="flex items-center gap-2">
+              <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+              업로드 중... {uploadProgress}%
+            </div>
+          ) : isSubmitting ? (
+            '등록 중...'
+          ) : (
+            '여행지 제안 등록'
+          )}
         </Button>
       </form>
     </div>

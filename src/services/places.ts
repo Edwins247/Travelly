@@ -17,6 +17,33 @@ import {
 import { db, storage } from '@/services/firebase';
 import { GetPlacesOptions, Place, PlaceCardData, PlaceInput } from '@/types/place';
 import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
+import { toast } from '@/store/toastStore';
+
+// Firebase 에러 타입 정의
+interface FirebaseError {
+  code?: string;
+  message?: string;
+}
+
+// 네트워크 에러 확인 함수
+function isNetworkError(error: unknown): boolean {
+  const firebaseError = error as FirebaseError;
+  return (
+    firebaseError?.code === 'unavailable' ||
+    firebaseError?.code === 'deadline-exceeded' ||
+    firebaseError?.message?.includes('network') ||
+    firebaseError?.message?.includes('offline') ||
+    !navigator.onLine
+  );
+}
+
+// 에러 메시지 생성 함수
+function getErrorMessage(error: unknown, defaultMessage: string): string {
+  if (isNetworkError(error)) {
+    return '네트워크 연결을 확인하고 다시 시도해주세요.';
+  }
+  return defaultMessage;
+}
 
 
 // src/services/places.ts
@@ -45,12 +72,19 @@ export interface PlaceDTO {
 
 // 1) 빈 틀만 생성하고 ID 리턴 (최초 호출)
 export async function addPlace(): Promise<string> {
-  const ref = doc(collection(db, 'places'));
-  await setDoc(ref, {
-    stats: { likes: 0, reviewCount: 0 },
-    createdAt: serverTimestamp(),
-  });
-  return ref.id;
+  try {
+    const ref = doc(collection(db, 'places'));
+    await setDoc(ref, {
+      stats: { likes: 0, reviewCount: 0 },
+      createdAt: serverTimestamp(),
+    });
+    return ref.id;
+  } catch (error) {
+    console.error('Error creating place:', error);
+    const message = getErrorMessage(error, '잠시 후 다시 시도해주세요.');
+    toast.error('여행지 생성 실패', message);
+    throw error;
+  }
 }
 
 // 2) 실제 필드 채우기 (업데이트)
@@ -68,46 +102,53 @@ export async function getPlaces({
   season,
   budget,
 }: GetPlacesOptions): Promise<PlaceCardData[]> {
-  // Base ref with Place type
-  const col = collection(db, 'places') as CollectionReference<Place>;
-  let q: Query<Place> = col;
+  try {
+    // Base ref with Place type
+    const col = collection(db, 'places') as CollectionReference<Place>;
+    let q: Query<Place> = col;
 
-  // 1) 키워드
-  if (keyword) {
-    q = query(q, where('keywords', 'array-contains', keyword));
+    // 1) 키워드
+    if (keyword) {
+      q = query(q, where('keywords', 'array-contains', keyword));
+    }
+
+    // 2) regionType 필터
+    if (region === 'domestic') {
+      q = query(q, where('regionType', '==', '국내'));
+    } else if (region === 'abroad') {
+      q = query(q, where('regionType', '==', '해외'));
+    }
+
+    // 3) season 필터
+    if (season) {
+      q = query(q, where('seasonTags', 'array-contains', season));
+    }
+
+    // 4) budget 필터
+    if (budget) {
+      q = query(q, where('budgetLevel', '==', budget));
+    }
+
+    // Execute and map
+    const snap = await getDocs(q);
+    return snap.docs.map((doc: QueryDocumentSnapshot<Place>) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        name: data.name,
+        region: data.location.region,
+        thumbnail:
+          Array.isArray(data.imageUrls) && data.imageUrls.length > 0
+            ? data.imageUrls[0]
+            : '/placeholder.jpg',
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching places:', error);
+    const message = getErrorMessage(error, '잠시 후 다시 시도해주세요.');
+    toast.error('여행지 목록 로딩 실패', message);
+    return []; // 빈 배열 반환으로 UI가 깨지지 않도록 함
   }
-
-  // 2) regionType 필터
-  if (region === 'domestic') {
-    q = query(q, where('regionType', '==', '국내'));
-  } else if (region === 'abroad') {
-    q = query(q, where('regionType', '==', '해외'));
-  }
-
-  // 3) season 필터
-  if (season) {
-    q = query(q, where('seasonTags', 'array-contains', season));
-  }
-
-  // 4) budget 필터
-  if (budget) {
-    q = query(q, where('budgetLevel', '==', budget));
-  }
-
-  // Execute and map
-  const snap = await getDocs(q);
-  return snap.docs.map((doc: QueryDocumentSnapshot<Place>) => {
-    const data = doc.data();
-    return {
-      id: doc.id,
-      name: data.name,
-      region: data.location.region,
-      thumbnail:
-        Array.isArray(data.imageUrls) && data.imageUrls.length > 0
-          ? data.imageUrls[0]
-          : '/placeholder.jpg',
-    };
-  });
 }
 
 /**
@@ -199,32 +240,39 @@ export async function decrementPlaceLikes(placeId: string): Promise<void> {
 
 
 export async function getPlaceById(id: string): Promise<PlaceDTO | null> {
-  const ref = doc(db, 'places', id) as DocumentReference<Omit<Place, 'id'>>;
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return null;
+  try {
+    const ref = doc(db, 'places', id) as DocumentReference<Omit<Place, 'id'>>;
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return null;
 
-  const d = snap.data() as Omit<Place, 'id'>;
+    const d = snap.data() as Omit<Place, 'id'>;
 
-  return {
-    id: snap.id,
-    name: d.name,
-    description: d.description,
-    imageUrls: d.imageUrls,
-    location: d.location,
-    regionType: d.regionType,
-    seasonTags: d.seasonTags,
-    budgetLevel: d.budgetLevel,
-    keywords: d.keywords,
-    createdBy: d.createdBy,
-    // Timestamp → Date → ISO 문자열
-    createdAt: d.createdAt.toDate().toISOString(),
-    stats: {
-      // Firestore 쪽에서 increment 로 관리했다면 number 여야 합니다.
-      likes: typeof d.stats.likes === 'number' ? d.stats.likes : 0,
-      reviewCount:
-        typeof d.stats.reviewCount === 'number' ? d.stats.reviewCount : 0,
-    },
-  };
+    return {
+      id: snap.id,
+      name: d.name,
+      description: d.description,
+      imageUrls: d.imageUrls,
+      location: d.location,
+      regionType: d.regionType,
+      seasonTags: d.seasonTags,
+      budgetLevel: d.budgetLevel,
+      keywords: d.keywords,
+      createdBy: d.createdBy,
+      // Timestamp → Date → ISO 문자열
+      createdAt: d.createdAt.toDate().toISOString(),
+      stats: {
+        // Firestore 쪽에서 increment 로 관리했다면 number 여야 합니다.
+        likes: typeof d.stats.likes === 'number' ? d.stats.likes : 0,
+        reviewCount:
+          typeof d.stats.reviewCount === 'number' ? d.stats.reviewCount : 0,
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching place by id:', error);
+    const message = getErrorMessage(error, '페이지를 새로고침하거나 다시 시도해주세요.');
+    toast.error('여행지 정보 로딩 실패', message);
+    return null;
+  }
 }
 
 
@@ -237,12 +285,18 @@ export function uploadPlaceImage(file: File, placeId: string): Promise<string> {
     task.on(
       'state_changed',
       null,
-      reject,
+      (error) => {
+        console.error('Error uploading image:', error);
+        toast.error('이미지 업로드 실패', '파일 크기나 형식을 확인하고 다시 시도해주세요.');
+        reject(error);
+      },
       async () => {
         try {
           const url = await getDownloadURL(storageRef);
           resolve(url);
         } catch (e) {
+          console.error('Error getting download URL:', e);
+          toast.error('이미지 URL 생성 실패', '다시 시도해주세요.');
           reject(e);
         }
       }

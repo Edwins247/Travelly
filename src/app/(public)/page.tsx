@@ -7,6 +7,7 @@ import { KeywordChips } from '@/components/home/KeywordChips';
 import { CategoryGrid } from '@/components/home/CategoryGrid';
 import { PlaceGrid } from '@/components/common/PlaceGrid';
 import { PageLoader } from '@/components/common/PageLoader';
+import { NetworkAware } from '@/components/common/NetworkStatus';
 import { getPlaces } from '@/services/places';
 import type { PlaceCardData } from '@/types/place';
 
@@ -24,19 +25,25 @@ export default function Home() {
   // 1) State 선언
   const [places, setPlaces] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // 2) Firestore에서 가져오기
+  const fetchPlaces = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getPlaces({});
+      setPlaces(data);
+    } catch (e) {
+      console.error('getPlaces 오류:', e);
+      setError('여행지 목록을 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    getPlaces({})
-      .then((data) => {
-        setPlaces(data);
-      })
-      .catch((e) => {
-        console.error('getPlaces 오류:', e);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    fetchPlaces();
   }, []);
 
   // 전체 페이지 로딩 중일 때는 전체 로더 표시
@@ -52,7 +59,15 @@ export default function Home() {
         <CategoryGrid />
 
         {/* 여행지 목록 */}
-        <PlaceGrid title="추천 여행지" places={places} />
+        <NetworkAware>
+          <PlaceGrid
+            title="추천 여행지"
+            places={places}
+            isLoading={loading}
+            error={error || undefined}
+            onRetry={fetchPlaces}
+          />
+        </NetworkAware>
       </div>
     </main>
   );

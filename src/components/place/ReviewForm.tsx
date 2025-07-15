@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { addReview } from '@/services/reviews';
 import { useAuthStore } from '@/store/authStore';
+import { toast } from '@/store/toastStore';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,33 +31,58 @@ interface ReviewFormProps {
 export function ReviewForm({ placeId }: ReviewFormProps) {
   const { user } = useAuthStore();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     watch,
     setValue,
-
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = useForm<FormValues>({ defaultValues: { content: '', tags: [], customTag: '' } });
 
   const onSubmit = handleSubmit(async (data) => {
-    if (!user) return alert('로그인 후 작성해주세요');
+    if (!user) {
+      toast.error('로그인 필요', '로그인 후 작성해주세요');
+      return;
+    }
 
-    // 커스텀 태그 추가
-    const finalTags = data.customTag.trim()
-      ? [...data.tags, data.customTag.trim()]
-      : [...data.tags];
+    if (!data.content.trim()) {
+      toast.error('내용 입력 필요', '후기 내용을 입력해주세요');
+      return;
+    }
 
-    await addReview({
-      placeId,
-      content: data.content,
-      userTags: finalTags,
-      userId: user.uid,
-    });
+    setSubmitError(null);
 
-    // 새로고침으로 리뷰 목록 업데이트
-    window.location.reload();
+    try {
+      // 커스텀 태그 추가
+      const finalTags = data.customTag.trim()
+        ? [...data.tags, data.customTag.trim()]
+        : [...data.tags];
+
+      await addReview({
+        placeId,
+        content: data.content.trim(),
+        userTags: finalTags,
+        userId: user.uid,
+      });
+
+      // 폼 초기화
+      setValue('content', '');
+      setValue('tags', []);
+      setValue('customTag', '');
+      setIsExpanded(false);
+
+      // 새로고침으로 리뷰 목록 업데이트
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+
+    } catch (error) {
+      console.error('Review submission error:', error);
+      setSubmitError('후기 등록에 실패했습니다. 다시 시도해주세요.');
+      toast.error('후기 등록 실패', '잠시 후 다시 시도해주세요.');
+    }
   });
 
   const selected = watch('tags');
@@ -82,7 +108,9 @@ export function ReviewForm({ placeId }: ReviewFormProps) {
         <CardContent className="py-8 text-center">
           <PenTool className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
           <p className="text-muted-foreground mb-4">후기를 작성하려면 로그인이 필요합니다</p>
-          <Button variant="outline" onClick={() => window.location.href = '/login'}>
+          <Button variant="outline" onClick={() => {
+            toast.info('로그인 필요', '후기 작성을 위해 로그인해주세요.');
+          }}>
             로그인하기
           </Button>
         </CardContent>
@@ -104,12 +132,21 @@ export function ReviewForm({ placeId }: ReviewFormProps) {
           <div className="space-y-2">
             <label className="text-sm font-medium">이 여행지는 어떠셨나요?</label>
             <Textarea
-              {...register('content', { required: true })}
+              {...register('content', {
+                required: '후기 내용을 입력해주세요',
+                minLength: {
+                  value: 10,
+                  message: '최소 10자 이상 입력해주세요'
+                }
+              })}
               placeholder="여행지에 대한 솔직한 후기를 남겨주세요..."
               rows={4}
               className="resize-none"
               onFocus={() => setIsExpanded(true)}
             />
+            {errors.content && (
+              <p className="text-sm text-destructive">{errors.content.message}</p>
+            )}
           </div>
 
           {/* 키워드 태그 섹션 */}
@@ -174,13 +211,23 @@ export function ReviewForm({ placeId }: ReviewFormProps) {
             </div>
           )}
 
+          {/* 에러 메시지 */}
+          {submitError && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{submitError}</p>
+            </div>
+          )}
+
           {/* 제출 버튼 */}
           <div className="flex gap-2">
             {isExpanded && (
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setIsExpanded(false)}
+                onClick={() => {
+                  setIsExpanded(false);
+                  setSubmitError(null);
+                }}
               >
                 취소
               </Button>
@@ -190,7 +237,14 @@ export function ReviewForm({ placeId }: ReviewFormProps) {
               disabled={isSubmitting}
               className="flex-1"
             >
-              {isSubmitting ? '등록 중...' : '후기 등록'}
+              {isSubmitting ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                  등록 중...
+                </div>
+              ) : (
+                '후기 등록'
+              )}
             </Button>
           </div>
         </form>

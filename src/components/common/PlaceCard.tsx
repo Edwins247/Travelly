@@ -4,6 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { LikeButton } from '@/components/common/LikeButton';
+import { useImageError } from '@/hooks/useImageError';
+import { ImageIcon } from 'lucide-react';
 // import { useRouter } from 'next/navigation';
 
 interface PlaceCardProps {
@@ -17,6 +19,7 @@ interface PlaceCardProps {
 
 export function PlaceCard({ id, name, region, thumbnail, className }: PlaceCardProps) {
   // const router = useRouter();
+  const { hasError, isLoading, handleError, handleLoad, getSrc } = useImageError('/img/placeholder.png');
 
   return (
     <Link
@@ -27,14 +30,29 @@ export function PlaceCard({ id, name, region, thumbnail, className }: PlaceCardP
       )}
     >
       {/* --- 썸네일 --- */}
-      <div className="relative h-36 w-full overflow-hidden">
-        <Image
-          src={thumbnail || '/img/placeholder.png'}
-          alt={name}
-          fill
-          className="object-cover transition-transform group-hover:scale-105"
-          unoptimized
-        />
+      <div className="relative h-36 w-full overflow-hidden bg-muted">
+        {hasError ? (
+          <div className="flex h-full w-full items-center justify-center bg-muted">
+            <ImageIcon className="h-8 w-8 text-muted-foreground" />
+          </div>
+        ) : (
+          <>
+            <Image
+              src={getSrc(thumbnail || '/img/placeholder.png')}
+              alt={name}
+              fill
+              className="object-cover transition-transform group-hover:scale-105"
+              onError={handleError}
+              onLoad={handleLoad}
+              unoptimized
+            />
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+              </div>
+            )}
+          </>
+        )}
 
         {/* 찜 버튼 */}
         <LikeButton placeId={id} />

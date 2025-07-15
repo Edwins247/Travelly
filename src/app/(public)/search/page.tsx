@@ -6,6 +6,7 @@ import { FilterBar } from '@/components/search/FilterBar';
 import { PlaceGrid } from '@/components/common/PlaceGrid';
 import { Pagination } from '@/components/common/Pagination';
 import { PageLoader } from '@/components/common/PageLoader';
+import { NetworkAware } from '@/components/common/NetworkStatus';
 import { getPlaces } from '@/services/places';
 import type { PlaceCardData, GetPlacesOptions } from '@/types/place';
 
@@ -25,6 +26,7 @@ function SearchContent() {
   // 2) State
   const [places, setPlaces]   = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState<string | null>(null);
   const [page, setPage]       = useState(rawPage);
 
   // 3) Sync page → URL
@@ -44,18 +46,46 @@ function SearchContent() {
 
   // 5) Fetch from Firestore on any filter change
   useEffect(() => {
-    setLoading(true);
+    const fetchPlaces = async () => {
+      setLoading(true);
+      setError(null);
+      const options: GetPlacesOptions = {
+        keyword: rawKeyword,
+        region:  rawRegion || undefined,
+        season:  rawSeason || undefined,
+        budget:  rawBudget || undefined,
+      };
+      try {
+        const data = await getPlaces(options);
+        setPlaces(data);
+      } catch (e) {
+        console.error('Search places error:', e);
+        setError('검색 결과를 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPlaces();
+  }, [rawKeyword, rawRegion, rawSeason, rawBudget]);
+
+  // 재시도용 함수
+  const retryFetch = () => {
     const options: GetPlacesOptions = {
       keyword: rawKeyword,
       region:  rawRegion || undefined,
       season:  rawSeason || undefined,
       budget:  rawBudget || undefined,
     };
+
+    setLoading(true);
+    setError(null);
+
     getPlaces(options)
       .then(setPlaces)
-      .catch(console.error)
+      .catch(() => setError('검색 결과를 불러오는데 실패했습니다.'))
       .finally(() => setLoading(false));
-  }, [rawKeyword, rawRegion, rawSeason, rawBudget]);
+  };
 
   // 6) Pagination slice
   const total     = places.length;
@@ -75,18 +105,22 @@ function SearchContent() {
 
       <FilterBar />
 
-      {loading ? (
-        <PlaceGrid title="검색 결과" isLoading />
-      ) : (
-        <PlaceGrid title="" places={slice} />
-      )}
+      <NetworkAware>
+        <PlaceGrid
+          title={loading ? "검색 결과" : ""}
+          places={slice}
+          isLoading={loading}
+          error={error || undefined}
+          onRetry={retryFetch}
+        />
 
-      <Pagination
-        perPage={PER_PAGE}
-        total={total}
-        currentPage={page}
-        onPageChange={setPage}
-      />
+        <Pagination
+          perPage={PER_PAGE}
+          total={total}
+          currentPage={page}
+          onPageChange={setPage}
+        />
+      </NetworkAware>
     </>
   );
 }

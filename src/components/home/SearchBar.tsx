@@ -15,6 +15,7 @@ export function SearchBar() {
   const debouncedInput = useDebounce(input, 300);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showList, setShowList] = useState(false);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
   // debouncedInput 변경 시 제안 키워드 조회
   useEffect(() => {
@@ -22,17 +23,25 @@ export function SearchBar() {
     const term = debouncedInput.trim();
 
     if (term) {
+      setIsLoadingSuggestions(true);
       fetchKeywordSuggestions(term).then((list) => {
         if (active) {
           setSuggestions(list);
           setShowList(list.length > 0); // 제안이 있을 때만 리스트 표시
+          setIsLoadingSuggestions(false);
         }
       }).catch((error) => {
         console.error('SearchBar: error fetching suggestions:', error);
+        if (active) {
+          setSuggestions([]);
+          setShowList(false);
+          setIsLoadingSuggestions(false);
+        }
       });
     } else {
       setSuggestions([]);
       setShowList(false);
+      setIsLoadingSuggestions(false);
     }
     return () => {
       active = false;
@@ -62,20 +71,33 @@ export function SearchBar() {
         </Button>
       </form>
 
-      {showList && suggestions.length > 0 && (
+      {showList && (
         <ul className="absolute top-full left-0 right-0 z-10 mt-1 max-h-60 overflow-auto rounded-md border bg-white shadow">
-          {suggestions.map((kw) => (
-            <li
-              key={kw}
-              className="cursor-pointer px-4 py-2 hover:bg-muted"
-              onMouseDown={() => {
-                setInput(kw);
-                router.push(`/search?keyword=${encodeURIComponent(kw)}`);
-              }}
-            >
-              {kw}
+          {isLoadingSuggestions ? (
+            <li className="px-4 py-2 text-center text-muted-foreground">
+              <div className="flex items-center justify-center gap-2">
+                <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                검색 중...
+              </div>
             </li>
-          ))}
+          ) : suggestions.length > 0 ? (
+            suggestions.map((kw) => (
+              <li
+                key={kw}
+                className="cursor-pointer px-4 py-2 hover:bg-muted"
+                onMouseDown={() => {
+                  setInput(kw);
+                  router.push(`/search?keyword=${encodeURIComponent(kw)}`);
+                }}
+              >
+                {kw}
+              </li>
+            ))
+          ) : (
+            <li className="px-4 py-2 text-center text-muted-foreground text-sm">
+              검색 결과가 없습니다
+            </li>
+          )}
         </ul>
       )}
     </div>
