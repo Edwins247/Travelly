@@ -15,7 +15,7 @@ import {
   where,
 } from 'firebase/firestore';
 import { db, storage } from '@/services/firebase';
-import { GetPlacesOptions, Place, PlaceCardData, PlaceInput } from '@/types/place';
+import { GetPlacesOptions, Place, PlaceCardData, PlaceDTO, PlaceInput } from '@/types/place';
 import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
 import { toast } from '@/store/toastStore';
 import { performanceTracking, stopTrace } from '@/utils/performance';
@@ -46,30 +46,6 @@ function getErrorMessage(error: unknown, defaultMessage: string): string {
   return defaultMessage;
 }
 
-
-// src/services/places.ts
-
-export interface PlaceDTO {
-  id: string;
-  name: string;
-  description?: string;
-  imageUrls: string[];
-  location: {
-    region: string;
-    district?: string;
-  };
-  regionType: '국내' | '해외';
-  seasonTags: string[];
-  budgetLevel: '저예산' | '중간' | '고급';
-  keywords: string[];
-  createdBy: string;
-  // 원시 문자열로 넘깁니다
-  createdAt: string;
-  stats: {
-    likes: number;
-    reviewCount: number;
-  };
-}
 
 // 1) 빈 틀만 생성하고 ID 리턴 (최초 호출)
 export async function addPlace(): Promise<string> {

@@ -10,6 +10,7 @@ import { PageLoader } from '@/components/common/PageLoader';
 import { NetworkAware } from '@/components/common/NetworkStatus';
 import { getPlaces } from '@/services/places';
 import { performanceTracking, stopTrace } from '@/utils/performance';
+import { usePageTracking } from '@/hooks/usePageTracking';
 import type { PlaceCardData } from '@/types/place';
 
 
@@ -22,6 +23,9 @@ export default function Home() {
     '반려동물',
     '역사 탐방',
   ];
+
+  // 페이지 추적
+  usePageTracking('home', { page_type: 'landing' });
 
   // 1) State 선언
   const [places, setPlaces] = useState<PlaceCardData[]>([]);

@@ -6,6 +6,7 @@ import KeywordExplorer from '@/components/place/KeywordExplorer';
 import { LikeButton } from '@/components/common/LikeButton';
 import { ReviewList } from '@/components/place/ReviewList';
 import { NetworkAware } from '@/components/common/NetworkStatus';
+import { PlaceDetailClient } from '@/components/place/PlaceDetailClient';
 import { Button } from '@/components/ui/button';
 import { Home, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
@@ -80,12 +81,14 @@ export default async function PlacePage({ params }: { params: Promise<{ id: stri
 
   return (
     <NetworkAware>
-      <main className="mx-auto max-w-6xl space-y-8 p-4">
+      <PlaceDetailClient place={place}>
+        <main className="mx-auto max-w-6xl space-y-8 p-4">
         {/* 이미지 갤러리 */}
         <div className="relative">
           <ImageGallery
             images={place.imageUrls}
             placeName={place.name}
+            placeId={place.id}
           />
           <LikeButton placeId={place.id} className="absolute top-4 right-4 z-20" />
         </div>
@@ -103,11 +106,16 @@ export default async function PlacePage({ params }: { params: Promise<{ id: stri
         />
 
         {/* 키워드 탐색 */}
-        <KeywordExplorer keywords={place.keywords} />
+        <KeywordExplorer
+            keywords={place.keywords}
+            placeName={place.name}
+            placeId={place.id}
+          />
 
-        {/* 리뷰 섹션 */}
-        <ReviewList placeId={place.id} />
-      </main>
+          {/* 리뷰 섹션 */}
+          <ReviewList placeId={place.id} />
+        </main>
+      </PlaceDetailClient>
     </NetworkAware>
   );
 }

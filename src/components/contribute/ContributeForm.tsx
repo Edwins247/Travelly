@@ -1,13 +1,15 @@
 // src/components/contribute/ContributeForm.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { addPlace, updatePlace, uploadPlaceImage } from '@/services/places';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/store/toastStore';
 import { startTrace, stopTrace } from '@/utils/performance';
+import { placeAnalytics } from '@/utils/analytics';
+import { usePageTracking, useConversionFunnel } from '@/hooks/usePageTracking';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -70,6 +72,18 @@ export function ContributeForm() {
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isUploading, setIsUploading] = useState(false);
+
+  // 페이지 추적 및 전환 퍼널
+  usePageTracking('contribute', { user_authenticated: !!user });
+  const { startFunnelStep, completeFunnelStep, abandonFunnelStep } = useConversionFunnel();
+
+  // Analytics: 여행지 제안 시작 (컴포넌트 마운트 시)
+  useEffect(() => {
+    placeAnalytics.startContribution();
+    startFunnelStep('contribution_start', {
+      ...(user?.uid && { user_id: user.uid })
+    });
+  }, [user, startFunnelStep]);
 
   const {
     register,
@@ -214,6 +228,21 @@ export function ContributeForm() {
       setUploadProgress(100);
       toast.success('등록 완료', '여행지 제안이 성공적으로 등록되었습니다! 🎉');
 
+      // Analytics: 여행지 제안 완료
+      placeAnalytics.completeContribution(
+        placeId,
+        data.region,
+        data.regionType,
+        data.keywords.length
+      );
+
+      // 전환 퍼널 완료
+      completeFunnelStep('contribution_complete', {
+        place_id: placeId,
+        region: data.region,
+        image_count: selectedImages.length,
+      });
+
       // 성공 시 추적 종료
       stopTrace(contributeTrace);
 
@@ -232,6 +261,12 @@ export function ContributeForm() {
     } catch (e) {
       console.error('Form submission error:', e);
       toast.error('등록 실패', '여행지 제안 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
+
+      // 전환 퍼널 중단
+      abandonFunnelStep('contribution_abandon', {
+        error: e instanceof Error ? e.message : 'Unknown error',
+        step: 'submission',
+      });
 
       // 에러 시 추적 종료
       stopTrace(contributeTrace);

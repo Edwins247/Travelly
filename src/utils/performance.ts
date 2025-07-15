@@ -29,7 +29,7 @@ export const startTrace = (traceName: string) => {
 };
 
 // 추적 종료
-export const stopTrace = (traceInstance: any) => {
+export const stopTrace = (traceInstance: { stop: () => void } | null) => {
   if (traceInstance) {
     try {
       traceInstance.stop();

@@ -5,6 +5,7 @@ import { addReview } from '@/services/reviews';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/store/toastStore';
 import { startTrace, stopTrace } from '@/utils/performance';
+import { engagementAnalytics } from '@/utils/analytics';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -76,6 +77,14 @@ export function ReviewForm({ placeId }: ReviewFormProps) {
       setValue('tags', []);
       setValue('customTag', '');
       setIsExpanded(false);
+
+      // Analytics: 리뷰 작성 완료
+      engagementAnalytics.completeReview(
+        placeId,
+        'Unknown Place', // place name은 상위에서 전달받아야 함
+        finalTags.length,
+        data.content.trim().length
+      );
 
       // 성공 시 추적 종료
       stopTrace(reviewTrace);
@@ -152,7 +161,11 @@ export function ReviewForm({ placeId }: ReviewFormProps) {
               placeholder="여행지에 대한 솔직한 후기를 남겨주세요..."
               rows={4}
               className="resize-none"
-              onFocus={() => setIsExpanded(true)}
+              onFocus={() => {
+                setIsExpanded(true);
+                // Analytics: 리뷰 작성 시작
+                engagementAnalytics.startReview(placeId);
+              }}
             />
             {errors.content && (
               <p className="text-sm text-destructive">{errors.content.message}</p>

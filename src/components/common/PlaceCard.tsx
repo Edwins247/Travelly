@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { LikeButton } from '@/components/common/LikeButton';
 import { useImageError } from '@/hooks/useImageError';
 import { ImageIcon } from 'lucide-react';
-// import { useRouter } from 'next/navigation';
+import { searchAnalytics } from '@/utils/analytics';
 
 interface PlaceCardProps {
   id: string;
@@ -15,15 +15,33 @@ interface PlaceCardProps {
   thumbnail: string;
   category?: string;
   className?: string;
+  searchKeyword?: string; // 검색 결과에서 온 경우
+  position?: number; // 검색 결과에서의 위치
 }
 
-export function PlaceCard({ id, name, region, thumbnail, className }: PlaceCardProps) {
-  // const router = useRouter();
+export function PlaceCard({
+  id,
+  name,
+  region,
+  thumbnail,
+  className,
+  searchKeyword,
+  position
+}: PlaceCardProps) {
   const { hasError, isLoading, handleError, handleLoad, getSrc } = useImageError('/img/placeholder.png');
+
+  // 클릭 핸들러 (Analytics 추가)
+  const handleClick = () => {
+    if (searchKeyword && position !== undefined) {
+      // 검색 결과에서 클릭한 경우 Analytics 추적
+      searchAnalytics.searchResultClick(searchKeyword, id, name, position);
+    }
+  };
 
   return (
     <Link
       href={`/places/${id}`}
+      onClick={handleClick}
       className={cn(
         'group flex w-56 flex-col overflow-hidden rounded-xl border transition-shadow hover:shadow-md',
         className,

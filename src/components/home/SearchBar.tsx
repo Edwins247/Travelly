@@ -9,6 +9,7 @@ import { Search as SearchIcon } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { fetchKeywordSuggestions } from '@/services/places';
 import { performanceTracking, stopTrace } from '@/utils/performance';
+import { searchAnalytics } from '@/utils/analytics';
 
 export function SearchBar() {
   const router = useRouter();
@@ -61,7 +62,11 @@ export function SearchBar() {
     if (!term) return;
 
     // 검색 실행 성능 추적
-    const searchTrace = performanceTracking.trackSearch('execution');
+    performanceTracking.trackSearch('execution');
+
+    // Analytics: 검색 쿼리 실행 (결과 수는 검색 페이지에서 추가)
+    searchAnalytics.searchQuery(term, 0); // 결과 수는 나중에 업데이트
+
     router.push(`/search?keyword=${encodeURIComponent(term)}`);
     setShowList(false);
     // 페이지 이동이므로 추적은 자동으로 종료됨
@@ -97,6 +102,9 @@ export function SearchBar() {
                 key={kw}
                 className="cursor-pointer px-4 py-2 hover:bg-muted"
                 onMouseDown={() => {
+                  // Analytics: 검색 제안 클릭
+                  searchAnalytics.searchSuggestionClick(kw, input);
+
                   setInput(kw);
                   router.push(`/search?keyword=${encodeURIComponent(kw)}`);
                 }}

@@ -6,23 +6,35 @@ import { ChevronLeft, ChevronRight, Expand, X, ImageIcon, AlertTriangle } from '
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { engagementAnalytics } from '@/utils/analytics';
 
 interface ImageGalleryProps {
   images: string[];
   placeName: string;
+  placeId?: string; // Analytics용
 }
 
-export default function ImageGallery({ images, placeName }: ImageGalleryProps) {
+export default function ImageGallery({ images, placeName, placeId }: ImageGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
 
   const nextImage = () => {
     setCurrentIndex((prev) => (prev + 1) % images.length);
+
+    // Analytics: 이미지 네비게이션
+    if (placeId) {
+      engagementAnalytics.imageGalleryInteraction(placeId, 'navigate');
+    }
   };
 
   const prevImage = () => {
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+
+    // Analytics: 이미지 네비게이션
+    if (placeId) {
+      engagementAnalytics.imageGalleryInteraction(placeId, 'navigate');
+    }
   };
 
   const handleImageError = (index: number) => {
@@ -84,7 +96,14 @@ export default function ImageGallery({ images, placeName }: ImageGalleryProps) {
           variant="ghost"
           size="icon"
           className="absolute top-4 left-4 bg-black/20 hover:bg-black/40 text-white"
-          onClick={() => setIsFullscreen(true)}
+          onClick={() => {
+            setIsFullscreen(true);
+
+            // Analytics: 풀스크린 보기
+            if (placeId) {
+              engagementAnalytics.imageGalleryInteraction(placeId, 'fullscreen');
+            }
+          }}
         >
           <Expand className="h-5 w-5" />
         </Button>
@@ -98,7 +117,14 @@ export default function ImageGallery({ images, placeName }: ImageGalleryProps) {
                 className={`w-2 h-2 rounded-full transition-colors ${
                   index === currentIndex ? 'bg-white' : 'bg-white/50'
                 }`}
-                onClick={() => setCurrentIndex(index)}
+                onClick={() => {
+                  setCurrentIndex(index);
+
+                  // Analytics: 이미지 인디케이터 클릭
+                  if (placeId) {
+                    engagementAnalytics.imageGalleryInteraction(placeId, 'view');
+                  }
+                }}
               />
             ))}
           </div>
