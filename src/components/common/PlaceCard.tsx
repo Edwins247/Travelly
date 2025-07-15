@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -19,7 +20,7 @@ interface PlaceCardProps {
   position?: number; // 검색 결과에서의 위치
 }
 
-export function PlaceCard({
+export const PlaceCard = React.memo<PlaceCardProps>(function PlaceCard({
   id,
   name,
   region,
@@ -27,7 +28,7 @@ export function PlaceCard({
   className,
   searchKeyword,
   position
-}: PlaceCardProps) {
+}) {
   const { hasError, isLoading, handleError, handleLoad, getSrc } = useImageError('/img/placeholder.png');
 
   // 클릭 핸들러 (Analytics 추가)
@@ -83,4 +84,4 @@ export function PlaceCard({
       </div>
     </Link>
   );
-}
+});

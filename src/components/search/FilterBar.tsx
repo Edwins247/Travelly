@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Select,
@@ -25,7 +26,7 @@ export function FilterBar() {
   const router = useRouter();
 
   // helper: param 교체 후 push
-  const setParam = (key: string, value: string) => {
+  const setParam = useCallback((key: string, value: string) => {
     const p = new URLSearchParams(params);
 
     if (value === 'all') {
@@ -35,14 +36,21 @@ export function FilterBar() {
     }
 
     router.push(`/search?${p.toString()}`);
-  };
+  }, [params, router]);
 
-  const reset = () => router.push(`/search?keyword=${params.get('keyword') ?? ''}`);
+  const reset = useCallback(() =>
+    router.push(`/search?keyword=${params.get('keyword') ?? ''}`),
+    [router, params]
+  );
+
+  const handleRegionChange = useCallback((value: string) => setParam('region', value), [setParam]);
+  const handleSeasonChange = useCallback((value: string) => setParam('season', value), [setParam]);
+  const handleBudgetChange = useCallback((value: string) => setParam('budget', value), [setParam]);
 
   return (
     <div className="flex flex-wrap items-center gap-3">
       {/* ---------- Region ---------- */}
-      <Select value={params.get('region') ?? ''} onValueChange={(v) => setParam('region', v)}>
+      <Select value={params.get('region') ?? ''} onValueChange={handleRegionChange}>
         <SelectTrigger className="w-32">
           <SelectValue placeholder="지역" />
         </SelectTrigger>
@@ -56,7 +64,7 @@ export function FilterBar() {
       </Select>
 
       {/* ---------- Season ---------- */}
-      <Select value={params.get('season') ?? ''} onValueChange={(v) => setParam('season', v)}>
+      <Select value={params.get('season') ?? ''} onValueChange={handleSeasonChange}>
         <SelectTrigger className="w-28">
           <SelectValue placeholder="계절" />
         </SelectTrigger>
@@ -70,7 +78,7 @@ export function FilterBar() {
       </Select>
 
       {/* ---------- Budget ---------- */}
-      <Select value={params.get('budget') ?? ''} onValueChange={(v) => setParam('budget', v)}>
+      <Select value={params.get('budget') ?? ''} onValueChange={handleBudgetChange}>
         <SelectTrigger className="w-28">
           <SelectValue placeholder="예산" />
         </SelectTrigger>
