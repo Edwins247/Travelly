@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { getPlaces, getPlaceById, fetchKeywordSuggestions, getWishlistPlaces } from '@/services/places';
-import type { GetPlacesOptions, PlaceCardData, PlaceDTO } from '@/types/place';
+import type { GetPlacesOptions, PlaceCardData } from '@/types/place';
 
 /**
  * 장소 목록을 가져오는 React Query 훅

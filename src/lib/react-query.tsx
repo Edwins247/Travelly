@@ -1,6 +1,6 @@
 'use client';
 
-import { QueryClient, QueryClientProvider, HydrationBoundary, dehydrate } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, HydrationBoundary } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 
 /**
