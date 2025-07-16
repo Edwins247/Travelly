@@ -44,12 +44,12 @@ export const PlaceCard = React.memo<PlaceCardProps>(function PlaceCard({
       href={`/places/${id}`}
       onClick={handleClick}
       className={cn(
-        'group flex w-56 flex-col overflow-hidden rounded-xl border transition-shadow hover:shadow-md',
+        'group flex w-full flex-col overflow-hidden rounded-xl border transition-shadow hover:shadow-md',
         className,
       )}
     >
       {/* --- 썸네일 --- */}
-      <div className="relative h-36 w-full overflow-hidden bg-muted">
+      <div className="relative h-32 sm:h-36 w-full overflow-hidden bg-muted">
         {hasError ? (
           <div className="flex h-full w-full items-center justify-center bg-muted">
             <ImageIcon className="h-8 w-8 text-muted-foreground" />

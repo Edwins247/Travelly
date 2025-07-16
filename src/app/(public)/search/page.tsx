@@ -131,7 +131,7 @@ function SearchContent() {
 
 export default function SearchPage() {
   return (
-    <main className="mx-auto max-w-6xl space-y-6 px-4 py-10">
+    <main className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 py-6 sm:py-10">
       <Suspense fallback={<div>검색 결과를 불러오는 중…</div>}>
         <SearchContent />
       </Suspense>

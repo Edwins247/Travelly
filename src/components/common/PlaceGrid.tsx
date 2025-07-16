@@ -61,7 +61,7 @@ export const PlaceGrid = React.memo<PlaceGridProps>(function PlaceGrid({
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {isLoading
             ? skeletonArray.map((_, i) => <PlaceCardSkeleton key={i} />)
             : places.length === 0 ? (

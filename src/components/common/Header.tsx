@@ -19,7 +19,7 @@ const navItems = [
 
 export default function Header() {
   return (
-    <header className="flex h-16 items-center justify-between border-b px-6 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="flex h-16 items-center justify-between border-b px-4 sm:px-6 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       {/* 로고 */}
       <Link href="/" className="text-lg font-bold">
         Travelly

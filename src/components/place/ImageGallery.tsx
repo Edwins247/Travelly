@@ -52,7 +52,7 @@ export default function ImageGallery({ images, placeName, placeId }: ImageGaller
   return (
     <div className="space-y-4">
       {/* 메인 이미지 */}
-      <div className="relative h-96 rounded-xl overflow-hidden group bg-muted">
+      <div className="relative h-64 sm:h-80 md:h-96 rounded-xl overflow-hidden group bg-muted">
         {imageErrors.has(currentIndex) ? (
           <div className="flex h-full w-full items-center justify-center flex-col gap-2 text-muted-foreground">
             <AlertTriangle className="h-12 w-12" />
@@ -133,11 +133,11 @@ export default function ImageGallery({ images, placeName, placeId }: ImageGaller
 
       {/* 썸네일 그리드 */}
       {images.length > 1 && (
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
           {images.slice(0, 4).map((image, index) => (
             <button
               key={index}
-              className={`relative h-20 rounded-lg overflow-hidden border-2 transition-colors ${
+              className={`relative h-16 sm:h-20 rounded-lg overflow-hidden border-2 transition-colors ${
                 index === currentIndex ? 'border-primary' : 'border-transparent'
               }`}
               onClick={() => setCurrentIndex(index)}
