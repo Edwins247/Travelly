@@ -1,20 +1,43 @@
 // src/app/page.tsx
-'use client';
-
-import { useEffect, useState } from 'react';
-import { SearchBar } from '@/components/home/SearchBar';
-import { KeywordChips } from '@/components/home/KeywordChips';
-import { CategoryGrid } from '@/components/home/CategoryGrid';
-import { PlaceGrid } from '@/components/common/PlaceGrid';
-import { PageLoader } from '@/components/common/PageLoader';
-import { NetworkAware } from '@/components/common/NetworkStatus';
 import { getPlaces } from '@/services/places';
+import { HomeClient } from '@/components/home/HomeClient';
 import { performanceTracking, stopTrace } from '@/utils/performance';
-import { usePageTracking } from '@/hooks/usePageTracking';
+import type { Metadata } from 'next';
 import type { PlaceCardData } from '@/types/place';
 
+// 홈페이지 메타데이터
+export const metadata: Metadata = {
+  title: 'Travelly - 당신만의 특별한 여행지를 찾아보세요',
+  description: '다양한 여행지 정보와 후기를 확인하고, 키워드로 맞춤 여행지를 찾아보세요.',
+  keywords: ['여행', '여행지', '관광', '휴가', '여행 추천', '국내여행', '해외여행'],
+  openGraph: {
+    title: 'Travelly - 당신만의 특별한 여행지를 찾아보세요',
+    description: '다양한 여행지 정보와 후기를 확인하고, 키워드로 맞춤 여행지를 찾아보세요.',
+    url: 'https://travelly.com',
+    siteName: 'Travelly',
+    images: [
+      {
+        url: '/og-home.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Travelly 홈페이지',
+      },
+    ],
+    locale: 'ko_KR',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Travelly - 당신만의 특별한 여행지를 찾아보세요',
+    description: '다양한 여행지 정보와 후기를 확인하고, 키워드로 맞춤 여행지를 찾아보세요.',
+    images: ['/og-home.jpg'],
+  },
+  alternates: {
+    canonical: 'https://travelly.com',
+  },
+};
 
-export default function Home() {
+export default async function Home() {
   const hotKeywords = [
     '혼자 힐링',
     '겨울 실내',
@@ -24,62 +47,49 @@ export default function Home() {
     '역사 탐방',
   ];
 
-  // 페이지 추적
-  usePageTracking('home', { page_type: 'landing' });
+  // 서버에서 초기 데이터 페칭
+  const homePageTrace = performanceTracking.trackPageLoad('home-server');
 
-  // 1) State 선언
-  const [places, setPlaces] = useState<PlaceCardData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // 2) Firestore에서 가져오기
-  const fetchPlaces = async () => {
-    setLoading(true);
-    setError(null);
-
-    // 메인 페이지 로딩 성능 추적
-    const homePageTrace = performanceTracking.trackPageLoad('home');
-
-    try {
-      const data = await getPlaces({});
-      setPlaces(data);
-      stopTrace(homePageTrace); // 성공 시 추적 종료
-    } catch (e) {
-      console.error('getPlaces 오류:', e);
-      setError('여행지 목록을 불러오는데 실패했습니다.');
-      stopTrace(homePageTrace); // 에러 시 추적 종료
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPlaces();
-  }, []);
-
-  // 전체 페이지 로딩 중일 때는 전체 로더 표시
-  if (loading) {
-    return <PageLoader showHeader={false} showFooter={false} />;
+  let initialPlaces: PlaceCardData[];
+  try {
+    initialPlaces = await getPlaces({});
+    stopTrace(homePageTrace);
+  } catch (error) {
+    console.error('Error fetching initial places:', error);
+    stopTrace(homePageTrace);
+    initialPlaces = [];
   }
 
-  return (
-    <main className="flex flex-col items-center gap-6 py-16">
-      <div className="w-full max-w-6xl space-y-6 px-4">
-        <SearchBar />
-        <KeywordChips keywords={hotKeywords} />
-        <CategoryGrid />
+  // JSON-LD 구조화 데이터
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Travelly',
+    description: '다양한 여행지 정보와 후기를 확인하고, 키워드로 맞춤 여행지를 찾아보세요.',
+    url: 'https://travelly.com',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: 'https://travelly.com/search?keyword={search_term_string}',
+      'query-input': 'required name=search_term_string',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Travelly',
+      url: 'https://travelly.com',
+    },
+  };
 
-        {/* 여행지 목록 */}
-        <NetworkAware>
-          <PlaceGrid
-            title="추천 여행지"
-            places={places}
-            isLoading={loading}
-            error={error || undefined}
-            onRetry={fetchPlaces}
-          />
-        </NetworkAware>
-      </div>
-    </main>
+  return (
+    <>
+      {/* JSON-LD 구조화 데이터 */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <HomeClient
+        initialPlaces={initialPlaces}
+        hotKeywords={hotKeywords}
+      />
+    </>
   );
 }

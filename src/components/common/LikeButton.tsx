@@ -1,6 +1,7 @@
 // src/components/common/LikeButton.tsx
 'use client';
 
+import React from 'react';
 import { Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWishlist } from '@/hooks/useWishlist';
@@ -10,7 +11,7 @@ interface LikeButtonProps {
   className?: string;
 }
 
-export function LikeButton({ placeId, className }: LikeButtonProps) {
+export const LikeButton = React.memo<LikeButtonProps>(function LikeButton({ placeId, className }) {
   const { wishlist, loading, toggle } = useWishlist();
   const liked = wishlist.includes(placeId);
 
@@ -33,4 +34,4 @@ export function LikeButton({ placeId, className }: LikeButtonProps) {
       <Heart className={liked ? 'fill-destructive' : 'fill-none'} size={18} />
     </button>
   );
-}
+});

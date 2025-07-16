@@ -1,6 +1,7 @@
 // src/components/home/PlaceGrid.tsx
 'use client';
 
+import React, { useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { PlaceCardData } from '@/types/place';
 import { PlaceCard } from '@/components/common/PlaceCard';
@@ -15,15 +16,31 @@ interface PlaceGridProps {
   searchKeyword?: string;     // 검색 키워드 (Analytics용)
 }
 
-export function PlaceGrid({
+export const PlaceGrid = React.memo<PlaceGridProps>(function PlaceGrid({
   title,
   places = [],
   isLoading = false,
   error,
   onRetry,
   searchKeyword
-}: PlaceGridProps) {
+}) {
   const router = useRouter();
+
+  // 스켈레톤 배열을 메모이제이션
+  const skeletonArray = useMemo(() => Array.from({ length: 5 }), []);
+
+  // 더 보기 버튼 클릭 핸들러 최적화
+  const handleMoreClick = useCallback(() => {
+    router.push('/search');
+  }, [router]);
+
+  // 빈 상태 메시지 메모이제이션
+  const emptyMessage = useMemo(() => (
+    <div className="col-span-full flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+      <p>표시할 여행지가 없습니다.</p>
+      <p className="text-sm">다른 검색 조건을 시도해보세요.</p>
+    </div>
+  ), []);
 
   return (
     <section className="space-y-4">
@@ -46,12 +63,9 @@ export function PlaceGrid({
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {isLoading
-            ? Array.from({ length: 5 }).map((_, i) => <PlaceCardSkeleton key={i} />)
+            ? skeletonArray.map((_, i) => <PlaceCardSkeleton key={i} />)
             : places.length === 0 ? (
-                <div className="col-span-full flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
-                  <p>표시할 여행지가 없습니다.</p>
-                  <p className="text-sm">다른 검색 조건을 시도해보세요.</p>
-                </div>
+                emptyMessage
               ) : (
                 places.map((p, index) => (
                   <PlaceCard
@@ -69,11 +83,11 @@ export function PlaceGrid({
       {title === '추천 여행지' && !isLoading && !error && places.length > 0 && (
         <button
           className="text-sm text-primary underline-offset-2 hover:underline"
-          onClick={() => router.push('/search')}
+          onClick={handleMoreClick}
         >
           더 보기 →
         </button>
       )}
     </section>
   );
-}
+});

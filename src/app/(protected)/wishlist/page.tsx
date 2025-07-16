@@ -1,31 +1,29 @@
 // src/app/(protected)/wishlist/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useWishlist } from '@/hooks/useWishlist';
-import { getWishlistPlaces } from '@/services/places';
+import { useWishlistPlaces } from '@/hooks/usePlaces';
 import { PlaceGrid } from '@/components/common/PlaceGrid';
 import { Pagination } from '@/components/common/Pagination';
 import { PageLoader } from '@/components/common/PageLoader';
-import type { PlaceCardData } from '@/types/place';
 
 export default function WishlistPage() {
   const { wishlist, loading: wLoading } = useWishlist();
-  const [places, setPlaces] = useState<PlaceCardData[]>([]);
   const [page, setPage] = useState(1);
   const PER_PAGE = 8;
 
-  // wishlist ID 배열이 바뀔 때마다 실제 PlaceCardData로 변환
-  useEffect(() => {
-    if (wishlist.length > 0) {
-      getWishlistPlaces(wishlist).then(setPlaces);
-    } else {
-      setPlaces([]);
-    }
-  }, [wishlist]);
+  // React Query로 위시리스트 장소들 가져오기
+  const {
+    data: places = [],
+    isLoading: placesLoading
+  } = useWishlistPlaces(wishlist);
+
+  // 전체 로딩 상태
+  const loading = wLoading || placesLoading;
 
   // 로딩 중엔 전체 페이지 로더
-  if (wLoading) {
+  if (loading) {
     return <PageLoader showHeader={false} showFooter={false} />;
   }
 

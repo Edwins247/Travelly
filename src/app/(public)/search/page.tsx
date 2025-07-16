@@ -1,17 +1,17 @@
 // src/app/(public)/search/page.tsx
 'use client';
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { FilterBar } from '@/components/search/FilterBar';
 import { PlaceGrid } from '@/components/common/PlaceGrid';
 import { Pagination } from '@/components/common/Pagination';
 import { PageLoader } from '@/components/common/PageLoader';
 import { NetworkAware } from '@/components/common/NetworkStatus';
-import { getPlaces } from '@/services/places';
 import { performanceTracking, stopTrace } from '@/utils/performance';
 import { searchAnalytics } from '@/utils/analytics';
 import { usePageTracking } from '@/hooks/usePageTracking';
-import type { PlaceCardData, GetPlacesOptions } from '@/types/place';
+import { usePlaces } from '@/hooks/usePlaces';
+import type { GetPlacesOptions } from '@/types/place';
 
 function SearchContent() {
   const params = useSearchParams();
@@ -35,10 +35,26 @@ function SearchContent() {
   });
 
   // 2) State
-  const [places, setPlaces]   = useState<PlaceCardData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState<string | null>(null);
-  const [page, setPage]       = useState(rawPage);
+  const [page, setPage] = useState(rawPage);
+
+  // 3) 검색 옵션 메모이제이션
+  const searchOptions = useMemo<GetPlacesOptions>(() => ({
+    keyword: rawKeyword,
+    region: rawRegion || undefined,
+    season: rawSeason || undefined,
+    budget: rawBudget || undefined,
+  }), [rawKeyword, rawRegion, rawSeason, rawBudget]);
+
+  // 4) React Query로 장소 검색
+  const {
+    data: places = [],
+    isLoading: loading,
+    error: queryError,
+    refetch: retryFetch
+  } = usePlaces(searchOptions);
+
+  // 에러 메시지 변환
+  const error = queryError ? '검색 결과를 불러오는데 실패했습니다.' : null;
 
   // 3) Sync page → URL
   useEffect(() => {
@@ -50,70 +66,29 @@ function SearchContent() {
     }
   }, [page, rawPage, params, router]);
 
-  // 4) Whenever any filter changes, reset page to 1 & fetch
+  // 4) Whenever any filter changes, reset page to 1
   useEffect(() => {
     setPage(1);
   }, [rawKeyword, rawRegion, rawSeason, rawBudget]);
 
-  // 5) Fetch from Firebase on any filter change
+  // 5) 성능 추적 및 Analytics
   useEffect(() => {
-    const fetchPlaces = async () => {
-      setLoading(true);
-      setError(null);
-
+    if (!loading && places.length >= 0) {
       // 검색 페이지 로딩 성능 추적
       const searchPageTrace = performanceTracking.trackPageLoad('search-results');
+      stopTrace(searchPageTrace);
 
-      const options: GetPlacesOptions = {
-        keyword: rawKeyword,
-        region:  rawRegion || undefined,
-        season:  rawSeason || undefined,
-        budget:  rawBudget || undefined,
-      };
-      try {
-        const data = await getPlaces(options);
-        setPlaces(data);
-
-        // Analytics: 검색 결과 수 추적
-        if (rawKeyword) {
-          const filters = {
-            region: rawRegion,
-            season: rawSeason,
-            budget: rawBudget,
-          };
-          searchAnalytics.searchQuery(rawKeyword, data.length, filters);
-        }
-
-        stopTrace(searchPageTrace); // 성공 시 추적 종료
-      } catch (e) {
-        console.error('Search places error:', e);
-        setError('검색 결과를 불러오는데 실패했습니다.');
-        stopTrace(searchPageTrace); // 에러 시 추적 종료
-      } finally {
-        setLoading(false);
+      // Analytics: 검색 결과 수 추적
+      if (rawKeyword) {
+        const filters = {
+          region: rawRegion,
+          season: rawSeason,
+          budget: rawBudget,
+        };
+        searchAnalytics.searchQuery(rawKeyword, places.length, filters);
       }
-    };
-
-    fetchPlaces();
-  }, [rawKeyword, rawRegion, rawSeason, rawBudget]);
-
-  // 재시도용 함수
-  const retryFetch = () => {
-    const options: GetPlacesOptions = {
-      keyword: rawKeyword,
-      region:  rawRegion || undefined,
-      season:  rawSeason || undefined,
-      budget:  rawBudget || undefined,
-    };
-
-    setLoading(true);
-    setError(null);
-
-    getPlaces(options)
-      .then(setPlaces)
-      .catch(() => setError('검색 결과를 불러오는데 실패했습니다.'))
-      .finally(() => setLoading(false));
-  };
+    }
+  }, [loading, places.length, rawKeyword, rawRegion, rawSeason, rawBudget]);
 
   // 6) Pagination slice
   const total     = places.length;

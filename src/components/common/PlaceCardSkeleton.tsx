@@ -1,7 +1,8 @@
 // src/components/common/PlaceCardSkeleton.tsx
+import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export function PlaceCardSkeleton() {
+export const PlaceCardSkeleton = React.memo(function PlaceCardSkeleton() {
   return (
     <div className="w-56">
       <Skeleton className="h-36 w-full rounded-xl" />
@@ -12,4 +13,4 @@ export function PlaceCardSkeleton() {
       </div>
     </div>
   );
-}
+});
