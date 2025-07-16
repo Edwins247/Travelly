@@ -226,6 +226,20 @@ export async function decrementPlaceLikes(placeId: string): Promise<void> {
 
 
 
+/**
+ * SSG를 위해 모든 장소 ID를 가져옵니다.
+ */
+export async function getAllPlaceIds(): Promise<string[]> {
+  try {
+    const col = collection(db, 'places');
+    const snap = await getDocs(col);
+    return snap.docs.map(doc => doc.id);
+  } catch (error) {
+    console.error('Error fetching all place IDs:', error);
+    return [];
+  }
+}
+
 export async function getPlaceById(id: string): Promise<PlaceDTO | null> {
   try {
     const ref = doc(db, 'places', id) as DocumentReference<Omit<Place, 'id'>>;

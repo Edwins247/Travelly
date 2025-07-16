@@ -63,6 +63,7 @@ export const PlaceCard = React.memo<PlaceCardProps>(function PlaceCard({
               className="object-cover transition-transform group-hover:scale-105"
               onError={handleError}
               onLoad={handleLoad}
+              priority={position === 0} // 첫 번째 이미지에만 priority 적용
               unoptimized
             />
             {isLoading && (

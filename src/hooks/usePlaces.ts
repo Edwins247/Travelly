@@ -1,14 +1,18 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { getPlaces, getPlaceById, fetchKeywordSuggestions, getWishlistPlaces } from '@/services/places';
 import type { GetPlacesOptions, PlaceCardData, PlaceDTO } from '@/types/place';
 
 /**
  * 장소 목록을 가져오는 React Query 훅
- * 
+ *
  * @param options - 검색 옵션 (키워드, 지역, 계절, 예산)
+ * @param queryOptions - React Query 옵션 (선택사항)
  * @returns React Query 결과 객체
  */
-export function usePlaces(options: GetPlacesOptions = {}) {
+export function usePlaces(
+  options: GetPlacesOptions = {},
+  queryOptions?: Partial<UseQueryOptions<PlaceCardData[], Error>>
+) {
   return useQuery({
     queryKey: ['places', options],
     queryFn: () => getPlaces(options),
@@ -16,6 +20,7 @@ export function usePlaces(options: GetPlacesOptions = {}) {
     gcTime: 10 * 60 * 1000, // 10분간 캐시 유지
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // 지수 백오프
+    ...queryOptions, // 추가 옵션 병합
   });
 }
 

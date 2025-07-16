@@ -1,6 +1,6 @@
 'use client';
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, HydrationBoundary, dehydrate } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 
 /**
@@ -39,4 +39,53 @@ export function ReactQueryProvider({ children }: { children: ReactNode }) {
       {children}
     </QueryClientProvider>
   );
+}
+
+/**
+ * 서버 사이드에서 사용할 QueryClient 생성 함수
+ *
+ * 서버 컴포넌트에서 데이터를 프리페치할 때 사용합니다.
+ */
+export function createServerQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        // 서버에서는 staleTime을 0으로 설정하여 항상 fresh한 데이터 사용
+        staleTime: 0,
+
+        // 서버에서는 캐시를 사용하지 않음
+        gcTime: 0,
+
+        // 서버에서는 재시도하지 않음
+        retry: false,
+
+        // 서버에서는 refetch 비활성화
+        refetchOnReconnect: false,
+        refetchOnWindowFocus: false,
+      },
+    },
+  });
+}
+
+/**
+ * SSR/SSG를 위한 Hydration 컴포넌트
+ *
+ * 서버에서 프리페치된 데이터를 클라이언트로 전달할 때 사용합니다.
+ */
+export function ReactQueryHydration({
+  children,
+  state
+}: {
+  children: ReactNode;
+  state?: unknown;
+}) {
+  if (state) {
+    return (
+      <HydrationBoundary state={state}>
+        {children}
+      </HydrationBoundary>
+    );
+  }
+
+  return <>{children}</>;
 }

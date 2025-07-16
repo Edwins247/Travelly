@@ -1,5 +1,5 @@
 // src/app/(public)/places/[id]/page.tsx
-import { getPlaceById } from '@/services/places';
+import { getPlaceById, getAllPlaceIds } from '@/services/places';
 import ImageGallery from '@/components/place/ImageGallery';
 import PlaceOverview from '@/components/place/PlaceOverview';
 import KeywordExplorer from '@/components/place/KeywordExplorer';
@@ -11,6 +11,79 @@ import { Button } from '@/components/ui/button';
 import { Home, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { performanceTracking, stopTrace } from '@/utils/performance';
+import type { Metadata } from 'next';
+
+// SSG를 위한 정적 파라미터 생성
+export async function generateStaticParams() {
+  try {
+    const placeIds = await getAllPlaceIds();
+    // 빌드 시간을 고려하여 상위 100개만 미리 생성
+    return placeIds.slice(0, 100).map((id) => ({
+      id,
+    }));
+  } catch (error) {
+    console.error('Error generating static params:', error);
+    return [];
+  }
+}
+
+// 동적 메타데이터 생성
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+
+  try {
+    const place = await getPlaceById(id);
+
+    if (!place) {
+      return {
+        title: '여행지를 찾을 수 없습니다 | Travelly',
+        description: '요청하신 여행지가 존재하지 않습니다.',
+      };
+    }
+
+    const title = `${place.name} | Travelly`;
+    const description = place.description || `${place.name}에 대한 여행 정보를 확인해보세요.`;
+    const imageUrl = place.imageUrls?.[0] || '/og-default.jpg';
+    const url = `https://travelly.com/places/${id}`;
+
+    return {
+      title,
+      description,
+      keywords: place.keywords?.join(', '),
+      openGraph: {
+        title,
+        description,
+        url,
+        siteName: 'Travelly',
+        images: [
+          {
+            url: imageUrl,
+            width: 1200,
+            height: 630,
+            alt: place.name,
+          },
+        ],
+        locale: 'ko_KR',
+        type: 'website',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: [imageUrl],
+      },
+      alternates: {
+        canonical: url,
+      },
+    };
+  } catch (error) {
+    console.error('Error generating metadata:', error);
+    return {
+      title: '여행지 정보 | Travelly',
+      description: '다양한 여행지 정보를 확인해보세요.',
+    };
+  }
+}
 
 export default async function PlacePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -79,7 +152,35 @@ export default async function PlacePage({ params }: { params: Promise<{ id: stri
   // 성공적으로 페이지 로드 완료
   stopTrace(pageTrace);
 
+  // JSON-LD 구조화 데이터
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'TouristAttraction',
+    name: place.name,
+    description: place.description,
+    image: place.imageUrls,
+    url: `https://travelly.com/places/${id}`,
+    address: {
+      '@type': 'PostalAddress',
+      addressRegion: place.location.region,
+      addressCountry: place.regionType === '국내' ? 'KR' : undefined,
+    },
+    aggregateRating: place.stats.reviewCount > 0 ? {
+      '@type': 'AggregateRating',
+      ratingCount: place.stats.reviewCount,
+      bestRating: 5,
+      worstRating: 1,
+    } : undefined,
+    keywords: place.keywords?.join(', '),
+  };
+
   return (
+    <>
+      {/* JSON-LD 구조화 데이터 */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
     <NetworkAware>
       <PlaceDetailClient place={place}>
         <main className="mx-auto max-w-6xl space-y-8 p-4">
@@ -117,5 +218,6 @@ export default async function PlacePage({ params }: { params: Promise<{ id: stri
         </main>
       </PlaceDetailClient>
     </NetworkAware>
+    </>
   );
 }
