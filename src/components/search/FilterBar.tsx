@@ -48,10 +48,10 @@ export function FilterBar() {
   const handleBudgetChange = useCallback((value: string) => setParam('budget', value), [setParam]);
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
       {/* ---------- Region ---------- */}
       <Select value={params.get('region') ?? ''} onValueChange={handleRegionChange}>
-        <SelectTrigger className="w-32">
+        <SelectTrigger className="w-20 sm:w-32 text-sm">
           <SelectValue placeholder="지역" />
         </SelectTrigger>
         <SelectContent>
@@ -65,7 +65,7 @@ export function FilterBar() {
 
       {/* ---------- Season ---------- */}
       <Select value={params.get('season') ?? ''} onValueChange={handleSeasonChange}>
-        <SelectTrigger className="w-28">
+        <SelectTrigger className="w-20 sm:w-28 text-sm">
           <SelectValue placeholder="계절" />
         </SelectTrigger>
         <SelectContent>
@@ -79,7 +79,7 @@ export function FilterBar() {
 
       {/* ---------- Budget ---------- */}
       <Select value={params.get('budget') ?? ''} onValueChange={handleBudgetChange}>
-        <SelectTrigger className="w-28">
+        <SelectTrigger className="w-20 sm:w-28 text-sm">
           <SelectValue placeholder="예산" />
         </SelectTrigger>
         <SelectContent>
@@ -92,7 +92,7 @@ export function FilterBar() {
       </Select>
 
       {/* ---------- Reset ---------- */}
-      <Button variant="ghost" size="sm" onClick={reset}>
+      <Button variant="ghost" size="sm" onClick={reset} className="text-sm px-2 sm:px-3">
         초기화
       </Button>
     </div>

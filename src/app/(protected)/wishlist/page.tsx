@@ -30,7 +30,7 @@ export default function WishlistPage() {
   // 아무것도 없으면 메시지
   if (places.length === 0) {
     return (
-      <main className="mx-auto max-w-6xl px-4 py-12">
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-12">
         <h1 className="text-xl font-semibold">찜 목록</h1>
         <p className="text-muted-foreground">아직 찜한 여행지가 없습니다.</p>
       </main>
@@ -43,7 +43,7 @@ export default function WishlistPage() {
   const slice = places.slice(start, start + PER_PAGE);
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-12 space-y-8">
+    <main className="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-12 space-y-8">
       <h1 className="text-xl font-semibold">찜 목록</h1>
 
       <PlaceGrid title="" places={slice} />

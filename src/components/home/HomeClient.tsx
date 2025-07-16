@@ -46,8 +46,8 @@ export function HomeClient({ initialPlaces, hotKeywords }: HomeClientProps) {
   }, [loading]);
 
   return (
-    <main className="flex flex-col items-center gap-6 py-16">
-      <div className="w-full max-w-6xl space-y-6 px-4">
+    <main className="flex flex-col items-center gap-6 py-8 sm:py-16">
+      <div className="w-full max-w-6xl space-y-6 px-4 sm:px-6">
         <SearchBar />
         <KeywordChips keywords={hotKeywords} />
         <CategoryGrid />

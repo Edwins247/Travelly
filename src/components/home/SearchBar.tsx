@@ -61,16 +61,18 @@ export function SearchBar() {
 
   return (
     <div className="relative w-full">
-      <form onSubmit={onSubmit} className="flex">
+      <form onSubmit={onSubmit} className="flex gap-2">
         <Input
           value={input}
           placeholder="어디로 떠나고 싶으신가요?"
           onFocus={handleFocus}
           onBlur={handleBlur}
           onChange={handleInputChange}
+          className="flex-1 h-12 text-base"
         />
-        <Button type="submit" className="ml-2">
+        <Button type="submit" className="h-12 px-4 sm:px-6">
           <SearchIcon size={20} />
+          <span className="sr-only">검색</span>
         </Button>
       </form>
 

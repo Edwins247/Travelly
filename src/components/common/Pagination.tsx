@@ -40,15 +40,32 @@ export function Pagination({
     router.push(`?${p.toString()}`, { scroll: false });
   };
 
+  // 모바일에서는 페이지 수를 제한
+  const getVisiblePages = () => {
+    const maxVisible = 5; // 모바일에서 최대 5개 페이지만 표시
+    const half = Math.floor(maxVisible / 2);
+
+    let start = Math.max(1, current - half);
+    const end = Math.min(totalPages, start + maxVisible - 1);
+
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    return { start, end };
+  };
+
+  const { start, end } = getVisiblePages();
   const items = [];
-  for (let i = 1; i <= totalPages; i++) {
+
+  for (let i = start; i <= end; i++) {
     items.push(
       <Button
         key={i}
-        size="icon"
+        size="sm"
         variant={i === current ? 'default' : 'outline'}
         onClick={() => go(i)}
-        className="mx-0.5 w-8"
+        className="w-8 h-8 p-0 text-sm"
       >
         {i}
       </Button>,
@@ -56,23 +73,53 @@ export function Pagination({
   }
 
   return (
-    <div className="flex justify-center gap-2 py-6">
+    <div className="flex justify-center items-center gap-1 sm:gap-2 py-4 sm:py-6">
       <Button
-        size="icon"
+        size="sm"
         variant="outline"
         disabled={current === 1}
         onClick={() => go(current - 1)}
+        className="w-8 h-8 p-0"
       >
         ‹
       </Button>
 
+      {start > 1 && (
+        <>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => go(1)}
+            className="w-8 h-8 p-0 text-sm"
+          >
+            1
+          </Button>
+          {start > 2 && <span className="px-1 text-muted-foreground">...</span>}
+        </>
+      )}
+
       {items}
 
+      {end < totalPages && (
+        <>
+          {end < totalPages - 1 && <span className="px-1 text-muted-foreground">...</span>}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => go(totalPages)}
+            className="w-8 h-8 p-0 text-sm"
+          >
+            {totalPages}
+          </Button>
+        </>
+      )}
+
       <Button
-        size="icon"
+        size="sm"
         variant="outline"
         disabled={current === totalPages}
         onClick={() => go(current + 1)}
+        className="w-8 h-8 p-0"
       >
         ›
       </Button>

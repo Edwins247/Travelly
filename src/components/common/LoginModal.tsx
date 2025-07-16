@@ -51,7 +51,7 @@ export function LoginModal() {
 
   return (
     <Dialog open={open} onOpenChange={v => !v && closeModal()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="w-[90vw] max-w-md sm:w-full p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>로그인</DialogTitle>
           <DialogDescription>

@@ -183,7 +183,7 @@ export default async function PlacePage({ params }: { params: Promise<{ id: stri
       />
     <NetworkAware>
       <PlaceDetailClient place={place}>
-        <main className="mx-auto max-w-6xl space-y-8 p-4">
+        <main className="mx-auto max-w-6xl space-y-6 sm:space-y-8 p-4 sm:p-6">
         {/* 이미지 갤러리 */}
         <div className="relative">
           <ImageGallery

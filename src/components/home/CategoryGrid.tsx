@@ -27,10 +27,10 @@ const items = [
 
 export function CategoryGrid() {
   return (
-    <section className="rounded-2xl border p-6">
+    <section className="rounded-2xl border p-4 sm:p-6">
       <h2 className="mb-4 text-base font-semibold">카테고리별 탐색</h2>
 
-      <div className="grid grid-cols-4 gap-4 sm:grid-cols-6 lg:grid-cols-8">
+      <div className="grid grid-cols-2 gap-3 xs:grid-cols-4 sm:grid-cols-6 lg:grid-cols-8">
         {items.map(item => (
           <CategoryCard key={item.href} {...item} />
         ))}
