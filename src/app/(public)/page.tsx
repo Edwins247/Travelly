@@ -4,6 +4,7 @@ import { HomeClient } from '@/components/home/HomeClient';
 import { performanceTracking, stopTrace } from '@/utils/performance';
 import type { Metadata } from 'next';
 import type { PlaceCardData } from '@/types/place';
+import { HOT_KEYWORDS } from '@/constants/home';
 
 // 홈페이지 메타데이터
 export const metadata: Metadata = {
@@ -38,14 +39,7 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const hotKeywords = [
-    '혼자 힐링',
-    '겨울 실내',
-    '가족 여행',
-    '사진맛집',
-    '반려동물',
-    '역사 탐방',
-  ];
+  const hotKeywords = HOT_KEYWORDS;
 
   // 서버에서 초기 데이터 페칭
   const homePageTrace = performanceTracking.trackPageLoad('home-server');

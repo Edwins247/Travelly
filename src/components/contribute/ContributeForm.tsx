@@ -18,6 +18,7 @@ import { ImageUploadSection } from './ImageUploadSection';
 import { TravelInfoSection } from './TravelInfoSection';
 import { KeywordSection } from './KeywordSection';
 import { Button } from '@/components/ui/button';
+import { ERROR_MESSAGES, SUCCESS_MESSAGES, LOADING_MESSAGES } from '@/constants/messages';
 
 
 
@@ -63,22 +64,22 @@ export function ContributeForm() {
   // 폼 제출 핸들러
   const onSubmit = async (data: PlaceFormValues) => {
     if (!user) {
-      toast.error('로그인 필요', '로그인 후 이용해주세요.');
+      toast.error('로그인 필요', ERROR_MESSAGES.LOGIN_REQUIRED);
       return;
     }
 
     if (imageUpload.selectedImages.length === 0) {
-      toast.error('이미지 필수', '최소 1개의 이미지를 업로드해주세요.');
+      toast.error('이미지 필수', ERROR_MESSAGES.IMAGE_REQUIRED);
       return;
     }
 
     if (data.seasonTags.length === 0) {
-      toast.error('계절 선택 필수', '최소 1개의 계절을 선택해주세요.');
+      toast.error('계절 선택 필수', ERROR_MESSAGES.SEASON_REQUIRED);
       return;
     }
 
     if (data.keywords.length === 0) {
-      toast.error('키워드 선택 필수', '최소 1개의 키워드를 선택해주세요.');
+      toast.error('키워드 선택 필수', ERROR_MESSAGES.KEYWORD_REQUIRED);
       return;
     }
 
@@ -127,7 +128,7 @@ export function ContributeForm() {
       });
 
       setUploadProgress(100);
-      toast.success('등록 완료', '여행지 제안이 성공적으로 등록되었습니다! 🎉');
+      toast.success('등록 완료', SUCCESS_MESSAGES.CONTRIBUTE_SUCCESS);
 
       // Analytics: 여행지 제안 완료
       placeAnalytics.completeContribution(
@@ -160,7 +161,7 @@ export function ContributeForm() {
 
     } catch (e) {
       console.error('Form submission error:', e);
-      toast.error('등록 실패', '여행지 제안 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
+      toast.error('등록 실패', ERROR_MESSAGES.CONTRIBUTE_FAILED);
 
       // 전환 퍼널 중단
       abandonFunnelStep('contribution_abandon', {
@@ -223,10 +224,10 @@ export function ContributeForm() {
           {isUploading ? (
             <div className="flex items-center gap-2">
               <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-              업로드 중... {uploadProgress}%
+              {LOADING_MESSAGES.UPLOADING} {uploadProgress}%
             </div>
           ) : isSubmitting ? (
-            '등록 중...'
+            LOADING_MESSAGES.SUBMITTING
           ) : (
             '여행지 제안 등록'
           )}

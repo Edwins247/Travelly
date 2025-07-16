@@ -12,13 +12,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { PenTool, Tag, Plus, X } from 'lucide-react';
-
-
-const availableTags = [
-  '힐링', '가족여행', '뷰맛집', '액티비티', '데이트', '혼행',
-  '사진맛집', '인스타', '자연', '도시', '전통', '현대',
-  '조용함', '활기참', '저렴함', '고급스러움'
-];
+import { REVIEW_TAGS, REVIEW_DEFAULTS } from '@/constants/review';
+import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '@/constants/messages';
+import { TIME } from '@/constants/common';
 
 interface FormValues {
   content: string;
@@ -41,7 +37,7 @@ export function ReviewForm({ placeId }: ReviewFormProps) {
     watch,
     setValue,
     formState: { isSubmitting, errors },
-  } = useForm<FormValues>({ defaultValues: { content: '', tags: [], customTag: '' } });
+  } = useForm<FormValues>({ defaultValues: REVIEW_DEFAULTS });
 
   const onSubmit = handleSubmit(async (data) => {
     if (!user) {
@@ -92,7 +88,7 @@ export function ReviewForm({ placeId }: ReviewFormProps) {
       // 새로고침으로 리뷰 목록 업데이트
       setTimeout(() => {
         window.location.reload();
-      }, 1000);
+      }, TIME.RELOAD_DELAY);
 
     } catch (error) {
       console.error('Review submission error:', error);
@@ -200,7 +196,7 @@ export function ReviewForm({ placeId }: ReviewFormProps) {
 
                 {/* 추천 태그 */}
                 <div className="flex flex-wrap gap-2">
-                  {availableTags.map((tag) => (
+                  {REVIEW_TAGS.map((tag) => (
                     <Badge
                       key={tag}
                       variant={selected.includes(tag) ? "default" : "outline"}

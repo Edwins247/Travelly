@@ -1,5 +1,7 @@
 // src/hooks/useImageUpload.ts
 import { useState } from 'react';
+import { IMAGES } from '@/constants/common';
+import { ERROR_MESSAGES } from '@/constants/messages';
 
 export function useImageUpload() {
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
@@ -7,8 +9,8 @@ export function useImageUpload() {
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    if (files.length + selectedImages.length > 5) {
-      alert('최대 5개의 이미지만 업로드할 수 있습니다.');
+    if (files.length + selectedImages.length > IMAGES.MAX_UPLOAD_COUNT) {
+      alert(ERROR_MESSAGES.IMAGE_COUNT_EXCEEDED);
       return;
     }
 

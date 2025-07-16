@@ -6,29 +6,23 @@ import {
   NavigationMenuList,
 } from '@/components/ui/navigation-menu';
 
-import { NavLink } from '@/components/common/NavLink';   
+import { NavLink } from '@/components/common/NavLink';
 import { LoginButton } from '@/components/common/LoginButton';
 import { MobileSheet } from '@/components/common/MobileSheet';
-
-const navItems = [
-  { href: '/',          label: '홈', exact: true },
-  { href: '/search',    label: '여행지' },
-  { href: '/wishlist',  label: '찜 리스트' },
-  { href: '/contribute',label: '여행지 제안' },
-];
+import { NAV_ITEMS, NAV_CONFIG } from '@/constants/navigation';
 
 export default function Header() {
   return (
     <header className="flex h-16 items-center justify-between border-b px-4 sm:px-6 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       {/* 로고 */}
       <Link href="/" className="text-lg font-bold">
-        Travelly
+        {NAV_CONFIG.LOGO_TEXT}
       </Link>
 
       {/* 데스크톱 GNB */}
       <NavigationMenu className="hidden md:block">
         <NavigationMenuList>
-          {navItems.map(item => (
+          {NAV_ITEMS.map(item => (
             <NavLink key={item.href} {...item} />
           ))}
         </NavigationMenuList>
@@ -40,7 +34,7 @@ export default function Header() {
       </div>
 
       {/* 모바일 햄버거 메뉴 */}
-      <MobileSheet nav={navItems} />
+      <MobileSheet nav={NAV_ITEMS} />
     </header>
   );
 }

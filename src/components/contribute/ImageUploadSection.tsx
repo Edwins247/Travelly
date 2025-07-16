@@ -5,6 +5,7 @@ import React from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { IMAGES } from '@/constants/common';
 
 interface ImageUploadSectionProps {
   selectedImages: File[];
@@ -24,7 +25,7 @@ export function ImageUploadSection({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ImageIcon className="h-5 w-5 text-primary" />
-          이미지 업로드 (최대 5개)
+          이미지 업로드 (최대 {IMAGES.MAX_UPLOAD_COUNT}개)
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -45,7 +46,7 @@ export function ImageUploadSection({
                 클릭하여 이미지를 선택하세요
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                JPG, PNG 파일 (최대 5개)
+                JPG, PNG 파일 (최대 {IMAGES.MAX_UPLOAD_COUNT}개)
               </p>
             </label>
           </div>

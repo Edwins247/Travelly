@@ -3,6 +3,7 @@
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { PAGINATION } from '@/constants/common';
 
 interface Props {
   perPage: number;
@@ -42,7 +43,7 @@ export function Pagination({
 
   // 모바일에서는 페이지 수를 제한
   const getVisiblePages = () => {
-    const maxVisible = 5; // 모바일에서 최대 5개 페이지만 표시
+    const maxVisible = PAGINATION.MAX_VISIBLE_PAGES; // 모바일에서 최대 5개 페이지만 표시
     const half = Math.floor(maxVisible / 2);
 
     let start = Math.max(1, current - half);
