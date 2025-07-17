@@ -32,7 +32,7 @@ const safeLogEvent = async (eventName: string, parameters?: Record<string, strin
       }
     }
   } catch (error) {
-    console.warn('Analytics event failed:', eventName, error);
+    if (process.env.NODE_ENV === 'development') console.warn('Analytics event failed:', eventName, error);
   }
 };
 

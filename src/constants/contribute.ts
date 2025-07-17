@@ -1,5 +1,3 @@
-// src/constants/contribute.ts
-
 export const domesticRegions = [
   { value: '서울', label: '서울', districts: ['중구', '강남구', '마포구', '종로구', '용산구'] },
   { value: '부산', label: '부산', districts: ['해운대구', '중구', '서구', '동래구'] },

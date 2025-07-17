@@ -1,5 +1,3 @@
-// src/constants/common.ts
-
 // 페이지네이션 관련 상수
 export const PAGINATION = {
   PER_PAGE: 12,

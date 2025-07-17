@@ -1,4 +1,3 @@
-// src/hooks/useKeywordManagement.ts
 import { UseFormSetValue, UseFormWatch } from 'react-hook-form';
 import { PlaceFormValues } from '@/types/contribute';
 

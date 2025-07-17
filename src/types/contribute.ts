@@ -1,5 +1,3 @@
-// src/types/contribute.ts
-
 export interface PlaceFormValues {
   name: string;
   description?: string;

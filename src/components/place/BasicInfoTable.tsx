@@ -1,4 +1,3 @@
-// src/components/place/BasicInfoTable.tsx
 'use client';
 
 import React from 'react';

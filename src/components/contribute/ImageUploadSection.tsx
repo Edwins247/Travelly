@@ -1,4 +1,3 @@
-// src/components/contribute/ImageUploadSection.tsx
 'use client';
 
 import React from 'react';
@@ -14,8 +13,7 @@ interface ImageUploadSectionProps {
   removeImage: (index: number) => void;
 }
 
-export function ImageUploadSection({ 
-  selectedImages, 
+export function ImageUploadSection({  
   imagePreviewUrls, 
   handleImageChange, 
   removeImage 

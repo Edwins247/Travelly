@@ -26,7 +26,6 @@ export default async function Home() {
     initialPlaces = await getPlaces({});
     stopTrace(homePageTrace);
   } catch (error) {
-    console.error('Error fetching initial places:', error);
     stopTrace(homePageTrace);
     initialPlaces = [];
   }

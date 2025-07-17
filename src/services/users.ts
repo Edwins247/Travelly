@@ -1,4 +1,3 @@
-// src/services/users.ts
 import { doc, getDoc, setDoc, serverTimestamp, updateDoc, arrayUnion, arrayRemove, onSnapshot, Timestamp, DocumentReference, DocumentSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
 import type { User as FirebaseUser } from 'firebase/auth';

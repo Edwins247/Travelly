@@ -1,4 +1,3 @@
-// src/constants/home.ts
 import { 
   Landmark, 
   Globe, 

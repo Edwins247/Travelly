@@ -1,4 +1,3 @@
-// src/components/contribute/BasicInfoSection.tsx
 'use client';
 
 import React from 'react';

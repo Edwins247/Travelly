@@ -1,4 +1,3 @@
-// src/components/contribute/KeywordSection.tsx
 'use client';
 
 import React from 'react';

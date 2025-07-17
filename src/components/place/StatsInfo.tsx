@@ -1,4 +1,3 @@
-// src/components/place/StatsInfo.tsx
 'use client';
 
 import React from 'react';

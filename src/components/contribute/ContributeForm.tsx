@@ -1,4 +1,3 @@
-// src/components/contribute/ContributeForm.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';

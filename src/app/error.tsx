@@ -14,8 +14,6 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('Global error:', error);
-
     // 에러를 토스트로 알림
     toast.error(
       '서버 오류가 발생했습니다',

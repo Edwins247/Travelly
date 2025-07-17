@@ -1,4 +1,3 @@
-// src/hooks/useImageUpload.ts
 import { useState } from 'react';
 import { IMAGES } from '@/constants/common';
 import { ERROR_MESSAGES } from '@/constants/messages';

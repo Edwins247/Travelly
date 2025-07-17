@@ -1,5 +1,3 @@
-// src/constants/review.ts
-
 // 리뷰 태그 옵션들
 export const REVIEW_TAGS = [
   '힐링', 

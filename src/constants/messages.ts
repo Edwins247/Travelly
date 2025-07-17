@@ -1,5 +1,3 @@
-// src/constants/messages.ts
-
 // 에러 메시지
 export const ERROR_MESSAGES = {
   // 일반적인 에러

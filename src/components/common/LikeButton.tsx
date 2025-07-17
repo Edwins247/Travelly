@@ -1,4 +1,3 @@
-// src/components/common/LikeButton.tsx
 'use client';
 
 import React from 'react';

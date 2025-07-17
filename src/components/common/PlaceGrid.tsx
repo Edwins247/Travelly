@@ -1,4 +1,3 @@
-// src/components/home/PlaceGrid.tsx
 'use client';
 
 import React, { useMemo, useCallback } from 'react';

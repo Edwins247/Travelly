@@ -1,5 +1,3 @@
-// src/constants/search.ts
-
 // 검색 필터 옵션들
 export const SEARCH_REGIONS = [
   { value: 'all', label: '전체' },

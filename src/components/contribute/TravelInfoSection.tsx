@@ -1,4 +1,3 @@
-// src/components/contribute/TravelInfoSection.tsx
 'use client';
 
 import React from 'react';
