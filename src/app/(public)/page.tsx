@@ -26,6 +26,7 @@ export default async function Home() {
     initialPlaces = await getPlaces({});
     stopTrace(homePageTrace);
   } catch (error) {
+    if (process.env.NODE_ENV === 'development') console.error('Error fetching initial places: ', error);
     stopTrace(homePageTrace);
     initialPlaces = [];
   }

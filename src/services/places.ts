@@ -57,6 +57,7 @@ export async function addPlace(): Promise<string> {
     });
     return ref.id;
   } catch (error) {
+    if (process.env.NODE_ENV === 'development') console.error('Error creating place:', error);
     const message = getErrorMessage(error, '잠시 후 다시 시도해주세요.');
     toast.error('여행지 생성 실패', message);
     throw error;
@@ -127,6 +128,7 @@ export async function getPlaces({
     stopTrace(trace);
     return result;
   } catch (error) {
+    if (process.env.NODE_ENV === 'development') console.error('Error fetching places: ', error);
     const message = getErrorMessage(error, '잠시 후 다시 시도해주세요.');
     toast.error('여행지 목록 로딩 실패', message);
 
@@ -197,6 +199,7 @@ export async function fetchKeywordSuggestions(prefix: string, limit = 5): Promis
 
     return results;
   } catch (error) {
+    if (process.env.NODE_ENV === 'development') console.error('fetchKeywordSuggestions: error:', error);
     toast.error(
       '키워드 추천 오류가 발생했습니다',
       '잠시 후 다시 시도해주세요.'
@@ -236,6 +239,7 @@ export async function getAllPlaceIds(): Promise<string[]> {
     const snap = await getDocs(col);
     return snap.docs.map(doc => doc.id);
   } catch (error) {
+    if (process.env.NODE_ENV === 'development') console.error('Error fetching all place IDs:', error);
     toast.error(
       '장소 ID 불러오는데 오류가 발생했습니다',
       '잠시 후 다시 시도해주세요.'
@@ -273,6 +277,7 @@ export async function getPlaceById(id: string): Promise<PlaceDTO | null> {
       },
     };
   } catch (error) {
+    if (process.env.NODE_ENV === 'development') console.error('Error fetching place by id:', error);
     const message = getErrorMessage(error, '페이지를 새로고침하거나 다시 시도해주세요.');
     toast.error('여행지 정보 로딩 실패', message);
     return null;
@@ -293,6 +298,7 @@ export function uploadPlaceImage(file: File, placeId: string): Promise<string> {
       'state_changed',
       null,
       (error) => {
+        if (process.env.NODE_ENV === 'development') console.error('Error uploading image:', error);
         toast.error('이미지 업로드 실패', '파일 크기나 형식을 확인하고 다시 시도해주세요.');
         stopTrace(trace); // 에러 시 추적 종료
         reject(error);
@@ -302,10 +308,11 @@ export function uploadPlaceImage(file: File, placeId: string): Promise<string> {
           const url = await getDownloadURL(storageRef);
           stopTrace(trace); // 성공 시 추적 종료
           resolve(url);
-        } catch (e) {
+        } catch (error) {
+          if (process.env.NODE_ENV === 'development') console.error('Error getting download URL:', error);
           toast.error('이미지 URL 생성 실패', '다시 시도해주세요.');
           stopTrace(trace); // 에러 시 추적 종료
-          reject(e);
+          reject(error);
         }
       }
     );

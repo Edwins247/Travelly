@@ -34,6 +34,7 @@ export function LoginModal() {
   });
 
   const onSubmit = handleSubmit(async ({ email, password }) => {
+    if (process.env.NODE_ENV === 'development') console.log('Form Values:', {email, password});
     try {
       closeModal(); // 로그인 시도 시 모달 먼저 닫기
       await signInOrSignUpEmail(email, password);
@@ -97,6 +98,10 @@ export function LoginModal() {
                 await signInWithGoogle();
                 // signInWithGoogle()에서 새로고침이 일어남
               } catch (error) {
+                if (process.env.NODE_ENV === 'development') {
+                  console.log('Google 로그인 취소 또는 실패');
+                  console.log(error);
+                }
                 // 에러 발생 시에만 여기 도달 (팝업 취소 등)
                 toast.error('구글 로그인 오류가 발생했습니다', '잠시 후 다시 시도해주세요.');
                 // 에러 발생 시 모달 다시 열기

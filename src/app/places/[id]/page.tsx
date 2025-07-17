@@ -22,6 +22,7 @@ export async function generateStaticParams() {
       id,
     }));
   } catch (error) {
+    if (process.env.NODE_ENV === 'development') console.error('Error generating static params', error);
     return [];
   }
 }
@@ -59,7 +60,8 @@ export async function generateMetadata({
       },
     };
   } catch (error) {
-    toast.error('서버 오류가 발생했습니다', '잠시 후 다시 시도해주세요.');
+    if (process.env.NODE_ENV === 'development') console.error('Error generating metadata:', error);
+    toast.error('오류가 발생했습니다', '잠시 후 다시 시도해주세요.');
     return {
       title: '여행지 정보 | Travelly',
       description: '다양한 여행지 정보를 확인해보세요.',
