@@ -1,4 +1,3 @@
-// src/app/(public)/search/page.tsx
 'use client';
 import React, { Suspense, useEffect, useState, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';

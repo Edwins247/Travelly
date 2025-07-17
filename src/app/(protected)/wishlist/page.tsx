@@ -1,4 +1,3 @@
-// src/app/(protected)/wishlist/page.tsx
 'use client';
 
 import { useState } from 'react';

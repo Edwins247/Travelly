@@ -1,6 +1,10 @@
 import { ContributeForm } from '@/components/contribute/ContributeForm';
+import type { Metadata } from 'next';
 
-export const metadata = { title: 'Travelly | 여행지 제안' };
+export const metadata: Metadata = {
+  title: '여행지 제안 | Travelly',
+  description: '새로운 여행지를 제안하고 공유하세요.',
+};
 
 export default function ContributePage() {
   return (

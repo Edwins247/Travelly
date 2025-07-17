@@ -1,4 +1,3 @@
-// src/app/(public)/places/[id]/page.tsx
 import { getPlaceById, getAllPlaceIds } from '@/services/places';
 import ImageGallery from '@/components/place/ImageGallery';
 import PlaceOverview from '@/components/place/PlaceOverview';
@@ -44,36 +43,15 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const title = `${place.name} | Travelly`;
     const description = place.description || `${place.name}에 대한 여행 정보를 확인해보세요.`;
     const imageUrl = place.imageUrls?.[0] || '/og-default.jpg';
-    const url = `https://travelly.com/places/${id}`;
 
     return {
       title,
       description,
-      keywords: place.keywords?.join(', '),
       openGraph: {
         title,
         description,
-        url,
-        siteName: 'Travelly',
-        images: [
-          {
-            url: imageUrl,
-            width: 1200,
-            height: 630,
-            alt: place.name,
-          },
-        ],
-        locale: 'ko_KR',
+        images: [{ url: imageUrl, alt: place.name }],
         type: 'website',
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title,
-        description,
-        images: [imageUrl],
-      },
-      alternates: {
-        canonical: url,
       },
     };
   } catch (error) {
@@ -152,35 +130,7 @@ export default async function PlacePage({ params }: { params: Promise<{ id: stri
   // 성공적으로 페이지 로드 완료
   stopTrace(pageTrace);
 
-  // JSON-LD 구조화 데이터
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'TouristAttraction',
-    name: place.name,
-    description: place.description,
-    image: place.imageUrls,
-    url: `https://travelly.com/places/${id}`,
-    address: {
-      '@type': 'PostalAddress',
-      addressRegion: place.location.region,
-      addressCountry: place.regionType === '국내' ? 'KR' : undefined,
-    },
-    aggregateRating: place.stats.reviewCount > 0 ? {
-      '@type': 'AggregateRating',
-      ratingCount: place.stats.reviewCount,
-      bestRating: 5,
-      worstRating: 1,
-    } : undefined,
-    keywords: place.keywords?.join(', '),
-  };
-
   return (
-    <>
-      {/* JSON-LD 구조화 데이터 */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
     <NetworkAware>
       <PlaceDetailClient place={place}>
         <main className="mx-auto max-w-6xl space-y-6 sm:space-y-8 p-4 sm:p-6">
@@ -218,6 +168,5 @@ export default async function PlacePage({ params }: { params: Promise<{ id: stri
         </main>
       </PlaceDetailClient>
     </NetworkAware>
-    </>
   );
 }
