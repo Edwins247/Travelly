@@ -1,4 +1,3 @@
-// src/components/place/PlaceDetailHero.tsx
 'use client';
 
 import Image from 'next/image';

@@ -1,4 +1,3 @@
-// src/hooks/useWishlist.ts
 import { useEffect, useState, useCallback } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import {
@@ -9,6 +8,7 @@ import {
 } from '@/services/users';
 import { incrementPlaceLikes, decrementPlaceLikes, getPlaceById } from '@/services/places';
 import { placeAnalytics } from '@/utils/analytics';
+import { toast } from '@/store/toastStore';
 
 export function useWishlist() {
   const user = useAuthStore((s) => s.user);
@@ -37,37 +37,35 @@ export function useWishlist() {
       try {
         if (next) {
           // 위시리스트에 추가 + 좋아요 수 증가
-          await Promise.all([
-            addToWishlist(user.uid, placeId),
-            incrementPlaceLikes(placeId)
-          ]);
+          await Promise.all([addToWishlist(user.uid, placeId), incrementPlaceLikes(placeId)]);
 
           // Analytics: 좋아요 이벤트 (place 정보 가져와서 추적)
-          getPlaceById(placeId).then(place => {
-            if (place) {
-              placeAnalytics.likePlace(placeId, place.name, place.location.region);
-            }
-          }).catch(console.error);
-
+          getPlaceById(placeId)
+            .then((place) => {
+              if (place) {
+                placeAnalytics.likePlace(placeId, place.name, place.location.region);
+              }
+            })
+            .catch(console.error);
         } else {
           // 위시리스트에서 제거 + 좋아요 수 감소
-          await Promise.all([
-            removeFromWishlist(user.uid, placeId),
-            decrementPlaceLikes(placeId)
-          ]);
+          await Promise.all([removeFromWishlist(user.uid, placeId), decrementPlaceLikes(placeId)]);
 
           // Analytics: 좋아요 취소 이벤트
-          getPlaceById(placeId).then(place => {
-            if (place) {
-              placeAnalytics.unlikePlace(placeId, place.name, place.location.region);
-            }
-          }).catch(console.error);
+          getPlaceById(placeId)
+            .then((place) => {
+              if (place) {
+                placeAnalytics.unlikePlace(placeId, place.name, place.location.region);
+              }
+            })
+            .catch(console.error);
         }
       } catch (error) {
-        console.error('Error toggling wishlist:', error);
+        if (process.env.NODE_ENV === 'development') console.error('Error toggling wishlist:', error);
+        toast.error('Toggle 오류가 발생했습니다', '잠시 후 다시 시도해주세요.');
       }
     },
-    [user]
+    [user],
   );
 
   return { wishlist, loading, toggle };

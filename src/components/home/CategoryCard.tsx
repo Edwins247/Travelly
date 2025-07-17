@@ -1,4 +1,3 @@
-// src/components/home/CategoryCard.tsx
 'use client';
 
 import { useRouter } from 'next/navigation';

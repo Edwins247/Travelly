@@ -8,6 +8,7 @@ import { LikeButton } from '@/components/common/LikeButton';
 import { useImageError } from '@/hooks/useImageError';
 import { ImageIcon } from 'lucide-react';
 import { searchAnalytics } from '@/utils/analytics';
+import { IMAGES } from '@/constants/common';
 
 interface PlaceCardProps {
   id: string;
@@ -29,7 +30,7 @@ export const PlaceCard = React.memo<PlaceCardProps>(function PlaceCard({
   searchKeyword,
   position
 }) {
-  const { hasError, isLoading, handleError, handleLoad, getSrc } = useImageError('/img/placeholder.png');
+  const { hasError, isLoading, handleError, handleLoad, getSrc } = useImageError(IMAGES.PLACEHOLDER);
 
   // 클릭 핸들러 (Analytics 추가)
   const handleClick = () => {

@@ -10,10 +10,12 @@ import { performanceTracking, stopTrace } from '@/utils/performance';
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { usePlaces } from '@/hooks/usePlaces';
 import type { PlaceCardData } from '@/types/place';
+import { ERROR_MESSAGES } from '@/constants/messages';
+import { TIME } from '@/constants/common';
 
 interface HomeClientProps {
   initialPlaces: PlaceCardData[];
-  hotKeywords: string[];
+  hotKeywords: readonly string[];
 }
 
 export function HomeClient({ initialPlaces, hotKeywords }: HomeClientProps) {
@@ -30,11 +32,11 @@ export function HomeClient({ initialPlaces, hotKeywords }: HomeClientProps) {
     // 서버에서 받은 초기 데이터가 있으면 즉시 사용
     initialData: initialPlaces,
     // 초기 데이터가 있으면 staleTime을 늘려서 불필요한 refetch 방지
-    staleTime: initialPlaces.length > 0 ? 10 * 60 * 1000 : 5 * 60 * 1000,
+    staleTime: initialPlaces.length > 0 ? TIME.STALE_TIME_LONG : TIME.STALE_TIME_MEDIUM,
   });
   
   // 에러 메시지 변환
-  const error = queryError ? '여행지 목록을 불러오는데 실패했습니다.' : undefined;
+  const error = queryError ? ERROR_MESSAGES.PLACES_LOAD_FAILED : undefined;
 
   // 성능 추적을 위한 useEffect
   useEffect(() => {

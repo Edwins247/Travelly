@@ -7,6 +7,8 @@ import { Review } from '@/types/review';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, Tag, TrendingUp } from 'lucide-react';
+import { ERROR_MESSAGES, LOADING_MESSAGES, EMPTY_MESSAGES, ACTION_MESSAGES } from '@/constants/messages';
+import { UI } from '@/constants/common';
 
 export function ReviewList({ placeId }: { placeId: string }) {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -22,7 +24,7 @@ export function ReviewList({ placeId }: { placeId: string }) {
         setReviews(data);
       } catch (e) {
         console.error('Error fetching reviews:', e);
-        setError('후기를 불러오는데 실패했습니다.');
+        setError(ERROR_MESSAGES.REVIEWS_LOAD_FAILED);
       } finally {
         setLoading(false);
       }
@@ -38,7 +40,7 @@ export function ReviewList({ placeId }: { placeId: string }) {
 
     getReviewsByPlace(placeId)
       .then(setReviews)
-      .catch(() => setError('후기를 불러오는데 실패했습니다.'))
+      .catch(() => setError(ERROR_MESSAGES.REVIEWS_LOAD_FAILED))
       .finally(() => setLoading(false));
   };
 
@@ -53,7 +55,7 @@ export function ReviewList({ placeId }: { placeId: string }) {
 
     return Object.entries(tagCount)
       .sort(([,a], [,b]) => b - a)
-      .slice(0, 8)
+      .slice(0, UI.POPULAR_TAGS_LIMIT)
       .map(([tag, count]) => ({ tag, count }));
   };
 
@@ -108,7 +110,7 @@ export function ReviewList({ placeId }: { placeId: string }) {
           <Card>
             <CardContent className="py-8 text-center text-muted-foreground">
               <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-              <p>후기를 불러오는 중...</p>
+              <p>{LOADING_MESSAGES.LOADING_REVIEWS}</p>
             </CardContent>
           </Card>
         ) : error ? (
@@ -120,7 +122,7 @@ export function ReviewList({ placeId }: { placeId: string }) {
                 onClick={retryFetchReviews}
                 className="text-sm text-primary hover:underline"
               >
-                다시 시도
+                {ACTION_MESSAGES.RETRY}
               </button>
             </CardContent>
           </Card>
@@ -128,8 +130,7 @@ export function ReviewList({ placeId }: { placeId: string }) {
           <Card>
             <CardContent className="py-8 text-center text-muted-foreground">
               <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>아직 후기가 없습니다.</p>
-              <p className="text-sm">첫 번째 후기를 남겨보세요!</p>
+              <p>{EMPTY_MESSAGES.NO_REVIEWS}</p>
             </CardContent>
           </Card>
         ) : (

@@ -14,7 +14,7 @@ export const isPerformanceEnabled = (): boolean => {
 // 커스텀 추적 시작
 export const startTrace = (traceName: string) => {
   if (!isPerformanceEnabled() || !perf) {
-    console.warn('Firebase Performance not available');
+    if (process.env.NODE_ENV === 'development') console.warn('Firebase Performance not available');
     return null;
   }
   
@@ -23,7 +23,7 @@ export const startTrace = (traceName: string) => {
     customTrace.start();
     return customTrace;
   } catch (error) {
-    console.error('Failed to start trace:', error);
+    if (process.env.NODE_ENV === 'development') console.error('Failed to start trace:', error);
     return null;
   }
 };
@@ -34,7 +34,7 @@ export const stopTrace = (traceInstance: { stop: () => void } | null) => {
     try {
       traceInstance.stop();
     } catch (error) {
-      console.error('Failed to stop trace:', error);
+     if (process.env.NODE_ENV === 'development') console.error('Failed to stop trace:', error);
     }
   }
 };

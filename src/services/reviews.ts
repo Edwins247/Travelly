@@ -1,4 +1,3 @@
-// src/services/reviews.ts
 import {
   collection,
   addDoc,
@@ -57,7 +56,7 @@ export async function getReviewsByPlace(placeId: string): Promise<Review[]> {
       };
     });
   } catch (error) {
-    console.error('Error fetching reviews:', error);
+    if (process.env.NODE_ENV === 'development') console.error('Error fetching reviews:', error);
     toast.error('후기 로딩 실패', '네트워크 연결을 확인하고 다시 시도해주세요.');
     return []; // 빈 배열 반환으로 UI가 깨지지 않도록 함
   }
@@ -81,7 +80,7 @@ export async function addReview(input: ReviewInput): Promise<string> {
     toast.success('후기가 등록되었습니다', '소중한 후기를 남겨주셔서 감사합니다!');
     return ref.id;
   } catch (error) {
-    console.error('Error adding review:', error);
+    if (process.env.NODE_ENV === 'development') console.error('Error adding review:', error);
     toast.error('후기 등록 실패', '잠시 후 다시 시도해주세요.');
     throw error;
   }

@@ -10,16 +10,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-
-// FilterBar.tsx 상단
-const regions = [
-  { value: 'all', label: '전체' },
-  { value: 'domestic', label: '국내' },
-  { value: 'abroad', label: '해외' },
-];
-
-const seasons = ['all', '봄', '여름', '가을', '겨울'];
-const budgets = ['all', '저예산', '중간', '고급'];
+import { SEARCH_REGIONS, SEARCH_SEASONS, SEARCH_BUDGETS } from '@/constants/search';
+import { ACTION_MESSAGES } from '@/constants/messages';
 
 export function FilterBar() {
   const params = useSearchParams();
@@ -55,7 +47,7 @@ export function FilterBar() {
           <SelectValue placeholder="지역" />
         </SelectTrigger>
         <SelectContent>
-          {regions.map((r) => (
+          {SEARCH_REGIONS.map((r) => (
             <SelectItem key={r.value} value={r.value}>
               {r.label}
             </SelectItem>
@@ -69,9 +61,9 @@ export function FilterBar() {
           <SelectValue placeholder="계절" />
         </SelectTrigger>
         <SelectContent>
-          {seasons.map((s) => (
+          {SEARCH_SEASONS.map((s) => (
             <SelectItem key={s} value={s}>
-              {s || '전체'}
+              {s === 'all' ? '전체' : s}
             </SelectItem>
           ))}
         </SelectContent>
@@ -83,9 +75,9 @@ export function FilterBar() {
           <SelectValue placeholder="예산" />
         </SelectTrigger>
         <SelectContent>
-          {budgets.map((b) => (
+          {SEARCH_BUDGETS.map((b) => (
             <SelectItem key={b} value={b}>
-              {b || '전체'}
+              {b === 'all' ? '전체' : b}
             </SelectItem>
           ))}
         </SelectContent>
@@ -93,7 +85,7 @@ export function FilterBar() {
 
       {/* ---------- Reset ---------- */}
       <Button variant="ghost" size="sm" onClick={reset} className="text-sm px-2 sm:px-3">
-        초기화
+        {ACTION_MESSAGES.RESET}
       </Button>
     </div>
   );

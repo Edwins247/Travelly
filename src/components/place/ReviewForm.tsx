@@ -12,13 +12,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { PenTool, Tag, Plus, X } from 'lucide-react';
-
-
-const availableTags = [
-  '힐링', '가족여행', '뷰맛집', '액티비티', '데이트', '혼행',
-  '사진맛집', '인스타', '자연', '도시', '전통', '현대',
-  '조용함', '활기참', '저렴함', '고급스러움'
-];
+import { REVIEW_TAGS, REVIEW_DEFAULTS } from '@/constants/review';
+import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '@/constants/messages';
+import { TIME } from '@/constants/common';
 
 interface FormValues {
   content: string;
@@ -41,16 +37,16 @@ export function ReviewForm({ placeId }: ReviewFormProps) {
     watch,
     setValue,
     formState: { isSubmitting, errors },
-  } = useForm<FormValues>({ defaultValues: { content: '', tags: [], customTag: '' } });
+  } = useForm<FormValues>({ defaultValues: REVIEW_DEFAULTS });
 
   const onSubmit = handleSubmit(async (data) => {
     if (!user) {
-      toast.error('로그인 필요', '로그인 후 작성해주세요');
+      toast.error('로그인 필요', ERROR_MESSAGES.LOGIN_REQUIRED);
       return;
     }
 
     if (!data.content.trim()) {
-      toast.error('내용 입력 필요', '후기 내용을 입력해주세요');
+      toast.error('내용 입력 필요', ERROR_MESSAGES.REQUIRED_FIELD);
       return;
     }
 
@@ -89,15 +85,18 @@ export function ReviewForm({ placeId }: ReviewFormProps) {
       // 성공 시 추적 종료
       stopTrace(reviewTrace);
 
+      // 성공 메시지 표시
+      toast.success(SUCCESS_MESSAGES.REVIEW_SUCCESS, SUCCESS_MESSAGES.REVIEW_SUCCESS_DESC);
+
       // 새로고침으로 리뷰 목록 업데이트
       setTimeout(() => {
         window.location.reload();
-      }, 1000);
+      }, TIME.RELOAD_DELAY);
 
     } catch (error) {
-      console.error('Review submission error:', error);
-      setSubmitError('후기 등록에 실패했습니다. 다시 시도해주세요.');
-      toast.error('후기 등록 실패', '잠시 후 다시 시도해주세요.');
+      if (process.env.NODE_ENV === 'development') console.error('Review submission error:', error);
+      setSubmitError(ERROR_MESSAGES.REVIEW_SUBMIT_FAILED);
+      toast.error('후기 등록 실패', ERROR_MESSAGES.REVIEW_SUBMIT_FAILED);
 
       // 에러 시 추적 종료
       stopTrace(reviewTrace);
@@ -200,7 +199,7 @@ export function ReviewForm({ placeId }: ReviewFormProps) {
 
                 {/* 추천 태그 */}
                 <div className="flex flex-wrap gap-2">
-                  {availableTags.map((tag) => (
+                  {REVIEW_TAGS.map((tag) => (
                     <Badge
                       key={tag}
                       variant={selected.includes(tag) ? "default" : "outline"}

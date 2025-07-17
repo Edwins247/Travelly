@@ -26,8 +26,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
+    if (process.env.NODE_ENV === 'development') console.error('ErrorBoundary caught an error:', error, errorInfo);
     // 에러를 토스트로 알림
     toast.error(
       '예상치 못한 오류가 발생했습니다',

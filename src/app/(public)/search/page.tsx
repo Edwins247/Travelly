@@ -1,4 +1,3 @@
-// src/app/(public)/search/page.tsx
 'use client';
 import React, { Suspense, useEffect, useState, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -12,6 +11,8 @@ import { searchAnalytics } from '@/utils/analytics';
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { usePlaces } from '@/hooks/usePlaces';
 import type { GetPlacesOptions } from '@/types/place';
+import { PAGINATION } from '@/constants/common';
+import { ERROR_MESSAGES, LOADING_MESSAGES } from '@/constants/messages';
 
 function SearchContent() {
   const params = useSearchParams();
@@ -24,7 +25,7 @@ function SearchContent() {
   const rawBudget  = params.get('budget') ?? '';
   const rawPage    = Number(params.get('page') ?? '1');
 
-  const PER_PAGE   = 12;
+  const PER_PAGE   = PAGINATION.PER_PAGE;
 
   // 페이지 추적 (검색 컨텍스트 포함)
   usePageTracking('search', {
@@ -54,7 +55,7 @@ function SearchContent() {
   } = usePlaces(searchOptions);
 
   // 에러 메시지 변환
-  const error = queryError ? '검색 결과를 불러오는데 실패했습니다.' : null;
+  const error = queryError ? ERROR_MESSAGES.SEARCH_LOAD_FAILED : null;
 
   // 3) Sync page → URL
   useEffect(() => {
@@ -132,7 +133,7 @@ function SearchContent() {
 export default function SearchPage() {
   return (
     <main className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 py-6 sm:py-10">
-      <Suspense fallback={<div>검색 결과를 불러오는 중…</div>}>
+      <Suspense fallback={<div>{LOADING_MESSAGES.LOADING_SEARCH}</div>}>
         <SearchContent />
       </Suspense>
     </main>

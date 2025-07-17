@@ -8,18 +8,13 @@ import { Menu } from 'lucide-react';
 import { LoginButton } from '@/components/common/LoginButton';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { cn } from '@/lib/utils';
-
-interface NavItem {
-  href: string;
-  label: string;
-  exact?: boolean;
-}
+import { NavItem } from '@/constants/navigation';
 
 interface MobileSheetProps {
   /** 햄버거 아이콘 Tailwind 클래스를 커스터마이즈하고 싶을 때 */
   className?: string;
   /** Header 쪽에서 주입하는 네비게이션 배열 */
-  nav: NavItem[];
+  nav: readonly NavItem[];
 }
 
 // 모바일용 링크 컴포넌트 (NavigationMenu 컨텍스트 불필요)

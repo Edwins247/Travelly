@@ -1,5 +1,3 @@
-// src/types/place.ts
-
 import type { Timestamp } from 'firebase/firestore';
 
 export interface Place {
@@ -57,8 +55,7 @@ export interface PlaceCardData {
 export interface PlaceInput {
   name: string;
   description?: string;
-  // imageUrl?: string;  ← 제거
-  imageUrls?: string[];    // ← 추가
+  imageUrls?: string[];    
   location: { region: string; district?: string };
   regionType: '국내' | '해외';
   seasonTags: string[];

@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { getPlaces, getPlaceById, fetchKeywordSuggestions, getWishlistPlaces } from '@/services/places';
 import type { GetPlacesOptions, PlaceCardData } from '@/types/place';
+import { TIME, RETRY } from '@/constants/common';
 
 /**
  * 장소 목록을 가져오는 React Query 훅
@@ -16,10 +17,10 @@ export function usePlaces(
   return useQuery({
     queryKey: ['places', options],
     queryFn: () => getPlaces(options),
-    staleTime: 5 * 60 * 1000, // 5분간 fresh 상태 유지
-    gcTime: 10 * 60 * 1000, // 10분간 캐시 유지
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // 지수 백오프
+    staleTime: TIME.STALE_TIME_MEDIUM, // 5분간 fresh 상태 유지
+    gcTime: TIME.GC_TIME, // 10분간 캐시 유지
+    retry: RETRY.MAX_ATTEMPTS,
+    retryDelay: (attemptIndex) => Math.min(1000 * RETRY.EXPONENTIAL_BASE ** attemptIndex, TIME.RETRY_DELAY_MAX), // 지수 백오프
     ...queryOptions, // 추가 옵션 병합
   });
 }
@@ -52,9 +53,9 @@ export function useKeywordSuggestions(prefix: string, limit = 5) {
   return useQuery({
     queryKey: ['keywordSuggestions', prefix, limit],
     queryFn: () => fetchKeywordSuggestions(prefix, limit),
-    staleTime: 2 * 60 * 1000, // 2분간 fresh 상태 유지 (검색 제안은 짧게)
-    gcTime: 5 * 60 * 1000, // 5분간 캐시 유지
-    retry: 2, // 검색 제안은 실패해도 크게 문제없으므로 재시도 횟수 줄임
+    staleTime: TIME.STALE_TIME_SHORT, // 2분간 fresh 상태 유지 (검색 제안은 짧게)
+    gcTime: TIME.STALE_TIME_MEDIUM, // 5분간 캐시 유지
+    retry: RETRY.MAX_ATTEMPTS_SEARCH, // 검색 제안은 실패해도 크게 문제없으므로 재시도 횟수 줄임
     enabled: !!prefix && prefix.length > 0, // prefix가 있을 때만 쿼리 실행
   });
 }

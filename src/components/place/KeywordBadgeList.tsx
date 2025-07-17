@@ -1,4 +1,3 @@
-// src/components/place/KeywordBadgeList.tsx
 'use client';
 
 import React from 'react';

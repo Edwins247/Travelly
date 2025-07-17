@@ -1,4 +1,3 @@
-// src/components/app/NavLink.tsx
 'use client';
 
 import Link from 'next/link';
@@ -8,11 +7,9 @@ import {
   NavigationMenuLink,
 } from '@/components/ui/navigation-menu';
 import { cn } from '@/lib/utils';
+import { NavItem } from '@/constants/navigation';
 
-export interface NavLinkProps {
-  href: string;
-  label: string;
-  exact?: boolean;
+export interface NavLinkProps extends NavItem {
   className?: string;
 }
 
